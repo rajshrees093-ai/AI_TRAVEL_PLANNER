@@ -1,0 +1,146 @@
+// Prisma Schema for RoamWise — Supabase PostgreSQL
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                String          @id @default(uuid()) @db.Uuid
+  name              String
+  email             String          @unique
+  avatar            String?
+  homeCity          String?         @map("home_city")
+  preferredCurrency String          @default("INR") @map("preferred_currency")
+  preferences       Json            @default("{}")
+  createdAt         DateTime        @default(now()) @map("created_at")
+
+  trips             Trip[]
+  generationJobs    GenerationJob[]
+
+  @@map("users")
+}
+
+model Trip {
+  id                 String        @id @default(uuid()) @db.Uuid
+  userId             String        @map("user_id") @db.Uuid
+  destinationPlaceId String        @map("destination_place_id")
+  destinationName    String        @map("destination_name")
+  destinationCountry String?       @map("destination_country")
+  heroImage          String?       @map("hero_image")
+  startCity          String?       @map("start_city")
+  startDate          DateTime      @map("start_date")
+  endDate            DateTime      @map("end_date")
+  travelers          Int           @default(2)
+  travelType         String        @default("Couple") @map("travel_type")
+  budget             Float
+  currency           String        @default("INR")
+  preferences        Json          @default("{}")
+  aiSummary          String?       @map("ai_summary")
+  status             String        @default("PLANNED")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  days               TripDay[]
+  budgetItems        BudgetItem[]
+  sharedTrips        SharedTrip[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("trips")
+}
+
+model TripDay {
+  id          String     @id @default(uuid()) @db.Uuid
+  tripId      String     @map("trip_id") @db.Uuid
+  dayNumber   Int        @map("day_number")
+  date        DateTime
+  title       String
+  summary     String?
+  weatherNote String?    @map("weather_note")
+
+  trip        Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  activities  Activity[]
+
+  @@unique([tripId, dayNumber])
+  @@index([tripId])
+  @@map("trip_days")
+}
+
+model Activity {
+  id               String   @id @default(uuid()) @db.Uuid
+  tripDayId        String   @map("trip_day_id") @db.Uuid
+  placeId          String   @map("place_id")
+  title            String
+  category         String
+  startTime        String   @map("start_time")
+  endTime          String   @map("end_time")
+  expectedDuration Int      @map("expected_duration") // in minutes
+  estimatedCost    Float    @default(0) @map("estimated_cost")
+  position         Int      @default(0)
+  notes            String?
+  lat              Float?
+  lng              Float?
+  address          String?
+  rating           Float?
+  openingHours     String?  @map("opening_hours")
+  photoUrl         String?  @map("photo_url")
+  travelTimeToNext Int?     @map("travel_time_to_next")
+
+  tripDay          TripDay  @relation(fields: [tripDayId], references: [id], onDelete: Cascade)
+
+  @@index([tripDayId, position])
+  @@map("activities")
+}
+
+model BudgetItem {
+  id              String  @id @default(uuid()) @db.Uuid
+  tripId          String  @map("trip_id") @db.Uuid
+  category        String
+  title           String
+  dayNumber       Int?    @map("day_number")
+  estimatedAmount Float   @map("estimated_amount")
+  currency        String  @default("INR")
+  sourceLabel     String  @default("AI Estimate") @map("source_label")
+
+  trip            Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@map("budget_items")
+}
+
+model SharedTrip {
+  id              String    @id @default(uuid()) @db.Uuid
+  tripId          String    @map("trip_id") @db.Uuid
+  accessTokenHash String    @unique @map("access_token_hash")
+  includeBudget   Boolean   @default(true) @map("include_budget")
+  isRevoked       Boolean   @default(false) @map("is_revoked")
+  expirationDate  DateTime? @map("expiration_date")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  trip            Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@map("shared_trips")
+}
+
+model GenerationJob {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  tripDraftId String?  @map("trip_draft_id")
+  tripId      String?  @map("trip_id") @db.Uuid
+  status      String   @default("QUEUED")
+  errorCode   String?  @map("error_code")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("generation_jobs")
+}
