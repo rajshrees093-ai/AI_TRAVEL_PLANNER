@@ -148,19 +148,8 @@ export async function GET(req: NextRequest) {
         stateOrCountry: "Custom Destination",
         category: "Culture, Landmarks & Local Dining",
         tagline: `Explore ${formattedName}'s top attractions, local dining, and scenic routes.`,
-        description: `Personalized itinerary in ${formattedName}.`,
         heroImage:
           "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80",
-        lat: 28.6139,
-        lng: 77.209,
-        defaultCurrency: "INR",
-        suggestedMinDailyPerPersonINR: 3500,
-        bestMonths: "Year-round",
-        weatherSummary: {
-          condition: "Pleasant",
-          tempRangeC: "18°C – 27°C",
-          advisory: "Pleasant conditions for sightseeing.",
-        },
       });
     }
 
