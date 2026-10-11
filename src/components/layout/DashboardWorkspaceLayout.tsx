@@ -12,6 +12,8 @@ import {
   User,
   Settings,
   LogOut,
+  LogIn,
+  UserPlus,
   Sun,
   Moon,
   Search,
@@ -19,10 +21,11 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
+  Lock,
 } from "lucide-react";
 import { useRoamWise } from "@/context/RoamWiseContext";
 import { RoamWiseLogo } from "@/components/ui/BrandComponents";
+import { findDestinationInfo } from "@/lib/destinations-catalog";
 import { cn } from "@/lib/utils";
 
 interface DashboardWorkspaceLayoutProps {
@@ -30,6 +33,7 @@ interface DashboardWorkspaceLayoutProps {
   title: string;
   breadcrumbs?: { label: string; href?: string }[];
   actions?: React.ReactNode;
+  allowPublicPreview?: boolean;
 }
 
 export function DashboardWorkspaceLayout({
@@ -37,6 +41,7 @@ export function DashboardWorkspaceLayout({
   title,
   breadcrumbs,
   actions,
+  allowPublicPreview = false,
 }: DashboardWorkspaceLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -53,33 +58,47 @@ export function DashboardWorkspaceLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [headerSearch, setHeaderSearch] = useState("");
 
-  if (!isAuthenticated) {
+  const isPublicDashboardRoute =
+    allowPublicPreview || pathname === "/dashboard" || pathname === "/";
+
+  if (!isAuthenticated && !isPublicDashboardRoute) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="bg-surface border border-border rounded-2xl max-w-md w-full p-8 text-center shadow-soft">
-          <div className="mx-auto w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
-            <Compass className="w-6 h-6" />
+        <div className="bg-surface border border-border rounded-3xl max-w-md w-full p-8 text-center shadow-elevated">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+            <Lock className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-heading font-bold text-heading">
-            Sign in to access your travel workspace
+          <span className="inline-block px-3 py-1 rounded-full bg-sand text-heading text-xs font-bold mb-2">
+            Account Required to Plan & Save
+          </span>
+          <h1 className="text-2xl font-heading font-bold text-heading">
+            Create Your Account or Sign In to Continue
           </h1>
-          <p className="text-sm text-muted mt-2">
-            Your saved trips, custom preferences, and AI itineraries are protected by your RoamWise account.
+          <p className="text-sm text-muted mt-2 leading-relaxed">
+            To search destinations, run the step-by-step AI itinerary builder, and store your travel plans in our backend, please register or sign in first.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 mt-6">
             <Link
-              href="/login"
-              className="flex-1 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold text-sm transition-colors"
+              href={`/signup?redirect=${encodeURIComponent(pathname || "/create-trip/destination")}`}
+              className="flex-1 py-3 px-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
-              Go to Sign In
+              <UserPlus className="w-4 h-4" />
+              <span>Sign Up Free</span>
             </Link>
             <Link
-              href="/"
-              className="flex-1 py-2.5 px-4 rounded-xl border border-border text-heading hover:bg-sand/40 font-medium text-sm transition-colors"
+              href={`/login?redirect=${encodeURIComponent(pathname || "/create-trip/destination")}`}
+              className="flex-1 py-3 px-4 rounded-xl border border-border text-heading hover:bg-sand/40 font-semibold text-sm transition-colors flex items-center justify-center gap-2"
             >
-              Back to Home
+              <LogIn className="w-4 h-4" />
+              <span>Sign In</span>
             </Link>
           </div>
+          <Link
+            href="/dashboard"
+            className="inline-block mt-5 text-xs font-semibold text-muted hover:text-primary"
+          >
+            ← Return to Dashboard Showcase
+          </Link>
         </div>
       </div>
     );
@@ -90,55 +109,82 @@ export function DashboardWorkspaceLayout({
       label: "Dashboard",
       href: "/dashboard",
       icon: LayoutDashboard,
-      active: pathname === "/dashboard",
+      active: pathname === "/dashboard" || pathname === "/",
+      requiresAuth: false,
     },
     {
       label: "Plan New Trip",
       href: "/create-trip/destination",
       icon: PlusCircle,
       active: pathname.startsWith("/create-trip"),
+      requiresAuth: true,
     },
     {
       label: "Explore Destinations",
       href: "/dashboard#explore-destinations",
       icon: Compass,
       active: false,
+      requiresAuth: false,
     },
     {
       label: "My Trips",
       href: "/saved-trips",
       icon: Briefcase,
       active: pathname.startsWith("/trips/"),
+      requiresAuth: true,
     },
     {
       label: "Saved Trips",
       href: "/saved-trips",
       icon: Bookmark,
       active: pathname === "/saved-trips",
+      requiresAuth: true,
     },
     {
       label: "Profile",
       href: "/profile",
       icon: User,
       active: pathname === "/profile",
+      requiresAuth: true,
     },
     {
       label: "Settings",
       href: "/profile#account-settings",
       icon: Settings,
       active: false,
+      requiresAuth: true,
     },
   ];
 
   const handleHeaderSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!headerSearch.trim()) return;
+    const q = headerSearch.trim();
+    if (!q) return;
+    const matched = findDestinationInfo(q);
     resetActiveDraft({
-      placeId: `ChIJ_search_${headerSearch.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
-      name: headerSearch.trim(),
-      country: "Selected Destination",
+      placeId: matched.placeId,
+      name: matched.name,
+      country: matched.stateOrCountry,
+      heroImage: matched.heroImage,
     });
-    router.push("/create-trip/destination");
+    if (!isAuthenticated) {
+      router.push(
+        `/signup?redirect=${encodeURIComponent("/create-trip/dates")}&dest=${encodeURIComponent(matched.name)}`
+      );
+      return;
+    }
+    router.push("/create-trip/dates");
+  };
+
+  const handleNavClick = (
+    e: React.MouseEvent,
+    href: string,
+    requiresAuth: boolean
+  ) => {
+    if (requiresAuth && !isAuthenticated) {
+      e.preventDefault();
+      router.push(`/signup?redirect=${encodeURIComponent(href)}`);
+    }
   };
 
   return (
@@ -183,61 +229,101 @@ export function DashboardWorkspaceLayout({
               <Link
                 key={item.label}
                 href={item.href}
+                onClick={(e) => handleNavClick(e, item.href, item.requiresAuth)}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                  "flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors",
                   item.active
                     ? "bg-primary text-white shadow-xs"
                     : "text-muted hover:text-heading hover:bg-sand/40"
                 )}
               >
-                <Icon className="w-4 h-4 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                <div className="flex items-center gap-3">
+                  <Icon className="w-4 h-4 shrink-0" />
+                  {!collapsed && <span>{item.label}</span>}
+                </div>
+                {!collapsed && item.requiresAuth && !isAuthenticated && (
+                  <Lock className="w-3 h-3 opacity-60" />
+                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Bottom User Card */}
+        {/* Bottom User Card or Sign Up / Sign In CTA */}
         <div className="p-3 border-t border-border">
-          <div
-            className={cn(
-              "flex items-center gap-3 p-2 rounded-xl bg-background border border-border",
-              collapsed && "justify-center"
-            )}
-          >
-            <div className="w-9 h-9 rounded-full bg-primary/15 text-primary font-heading font-bold text-sm flex items-center justify-center shrink-0">
-              {user?.name
-                ?.split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2) || "RW"}
-            </div>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-heading truncate">
-                  {user?.name || "Traveler"}
-                </p>
-                <p className="text-[11px] text-muted truncate">
-                  {user?.email || "explorer@roamwise.travel"}
-                </p>
+          {isAuthenticated && user ? (
+            <div
+              className={cn(
+                "flex items-center gap-3 p-2 rounded-xl bg-background border border-border",
+                collapsed && "justify-center"
+              )}
+            >
+              <div className="w-9 h-9 rounded-full bg-primary/15 text-primary font-heading font-bold text-sm flex items-center justify-center shrink-0">
+                {user.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
               </div>
-            )}
-            {!collapsed && (
-              <button
-                type="button"
-                onClick={() => {
-                  signOut();
-                  router.push("/login");
-                }}
-                title="Sign Out"
-                aria-label="Sign Out"
-                className="p-1.5 text-muted hover:text-red-600 rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+              {!collapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-heading truncate">
+                    {user.name}
+                  </p>
+                  <p className="text-[11px] text-muted truncate">
+                    {user.email}
+                  </p>
+                </div>
+              )}
+              {!collapsed && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    signOut();
+                    router.push("/dashboard");
+                  }}
+                  title="Sign Out"
+                  aria-label="Sign Out"
+                  className="p-1.5 text-muted hover:text-red-600 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          ) : !collapsed ? (
+            <div className="p-3 rounded-2xl bg-primary/5 border border-primary/20 space-y-2">
+              <p className="text-xs font-heading font-bold text-heading">
+                Ready to Plan Your Trip?
+              </p>
+              <p className="text-[11px] text-muted leading-snug">
+                Sign up or log in to search destinations & save AI itineraries.
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 pt-1">
+                <Link
+                  href="/signup?redirect=/create-trip/destination"
+                  className="py-2 px-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold text-center transition-colors"
+                >
+                  Sign Up
+                </Link>
+                <Link
+                  href="/login?redirect=/create-trip/destination"
+                  className="py-2 px-2.5 rounded-xl bg-surface border border-border hover:bg-sand/40 text-heading text-xs font-semibold text-center transition-colors"
+                >
+                  Log In
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              title="Sign In"
+              className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center mx-auto"
+            >
+              <LogIn className="w-4 h-4" />
+            </Link>
+          )}
         </div>
       </aside>
 
@@ -267,7 +353,10 @@ export function DashboardWorkspaceLayout({
                   <Link
                     key={item.label}
                     href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={(e) => {
+                      setMobileMenuOpen(false);
+                      handleNavClick(e, item.href, item.requiresAuth);
+                    }}
                     className={cn(
                       "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors",
                       item.active
@@ -282,24 +371,41 @@ export function DashboardWorkspaceLayout({
               })}
             </nav>
             <div className="p-4 border-t border-border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-heading">
-                    {user?.name}
-                  </p>
-                  <p className="text-xs text-muted">{user?.email}</p>
+              {isAuthenticated && user ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-heading">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-muted">{user.email}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      signOut();
+                      router.push("/dashboard");
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50"
+                  >
+                    Logout
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    signOut();
-                    router.push("/login");
-                  }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50"
-                >
-                  Logout
-                </button>
-              </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Link
+                    href="/signup?redirect=/create-trip/destination"
+                    className="flex-1 py-2 rounded-xl bg-primary text-white text-xs font-semibold text-center"
+                  >
+                    Sign Up
+                  </Link>
+                  <Link
+                    href="/login?redirect=/create-trip/destination"
+                    className="flex-1 py-2 rounded-xl border border-border text-heading text-xs font-semibold text-center"
+                  >
+                    Log In
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -350,30 +456,21 @@ export function DashboardWorkspaceLayout({
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* Quick Destination Search */}
+            {/* Quick Destination Search (Triggers Signup/Login if not authenticated) */}
             <form
               onSubmit={handleHeaderSearch}
-              className="hidden md:flex items-center bg-background border border-border rounded-xl px-3 py-1.5 w-60 focus-within:border-primary transition-colors"
+              className="hidden md:flex items-center bg-background border border-border rounded-xl px-3 py-1.5 w-64 focus-within:border-primary transition-colors"
             >
-              <Search className="w-4 h-4 text-muted mr-2 shrink-0" />
+              <Search className="w-4 h-4 text-primary mr-2 shrink-0" />
               <input
                 type="text"
                 value={headerSearch}
                 onChange={(e) => setHeaderSearch(e.target.value)}
-                placeholder="Quick plan destination..."
-                aria-label="Quick plan destination"
+                placeholder="Search destination or holy site..."
+                aria-label="Search destination or holy site"
                 className="bg-transparent text-xs text-heading placeholder:text-muted focus:outline-none w-full"
               />
             </form>
-
-            {/* Explicit Demo / Verified Catalog Badge */}
-            <span
-              title="Using curated verified catalog data. Add OpenAI & Google Maps API keys in .env.local for live cloud calls."
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-sand text-heading border border-sand-dark/50"
-            >
-              <Sparkles className="w-3 h-3 text-primary" />
-              <span>Demo & Verified Catalog</span>
-            </span>
 
             {/* Theme Switch */}
             <button
@@ -391,18 +488,35 @@ export function DashboardWorkspaceLayout({
 
             {actions}
 
-            {/* Profile Avatar Link */}
-            <Link
-              href="/profile"
-              title="Profile & Settings"
-              className="w-9 h-9 rounded-full bg-primary text-white font-heading font-bold text-xs flex items-center justify-center hover:bg-primary-dark transition-colors"
-            >
-              {user?.name
-                ?.split(" ")
-                .map((n) => n[0])
-                .join("")
-                .slice(0, 2) || "RW"}
-            </Link>
+            {isAuthenticated && user ? (
+              <Link
+                href="/profile"
+                title="Profile & Settings"
+                className="w-9 h-9 rounded-full bg-primary text-white font-heading font-bold text-xs flex items-center justify-center hover:bg-primary-dark transition-colors"
+              >
+                {user.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </Link>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/login?redirect=/create-trip/destination"
+                  className="px-3.5 py-2 rounded-xl border border-border bg-background hover:bg-sand/40 text-heading text-xs font-semibold transition-colors"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/signup?redirect=/create-trip/destination"
+                  className="px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold shadow-xs transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </div>
         </header>
 
@@ -420,14 +534,20 @@ export function DashboardWorkspaceLayout({
             href="/dashboard"
             className={cn(
               "flex flex-col items-center gap-1 text-[11px] font-medium py-1 px-3 rounded-lg",
-              pathname === "/dashboard" ? "text-primary" : "text-muted"
+              pathname === "/dashboard" || pathname === "/"
+                ? "text-primary"
+                : "text-muted"
             )}
           >
             <LayoutDashboard className="w-4 h-4" />
             <span>Dashboard</span>
           </Link>
           <Link
-            href="/create-trip/destination"
+            href={
+              isAuthenticated
+                ? "/create-trip/destination"
+                : "/signup?redirect=/create-trip/destination"
+            }
             className={cn(
               "flex flex-col items-center gap-1 text-[11px] font-medium py-1 px-3 rounded-lg",
               pathname.startsWith("/create-trip") ? "text-primary" : "text-muted"
@@ -437,7 +557,7 @@ export function DashboardWorkspaceLayout({
             <span>Plan Trip</span>
           </Link>
           <Link
-            href="/saved-trips"
+            href={isAuthenticated ? "/saved-trips" : "/login?redirect=/saved-trips"}
             className={cn(
               "flex flex-col items-center gap-1 text-[11px] font-medium py-1 px-3 rounded-lg",
               pathname === "/saved-trips" || pathname.startsWith("/trips/")
@@ -449,14 +569,14 @@ export function DashboardWorkspaceLayout({
             <span>My Trips</span>
           </Link>
           <Link
-            href="/profile"
+            href={isAuthenticated ? "/profile" : "/login?redirect=/profile"}
             className={cn(
               "flex flex-col items-center gap-1 text-[11px] font-medium py-1 px-3 rounded-lg",
               pathname === "/profile" ? "text-primary" : "text-muted"
             )}
           >
             <User className="w-4 h-4" />
-            <span>Profile</span>
+            <span>{isAuthenticated ? "Profile" : "Sign In"}</span>
           </Link>
         </nav>
       </div>

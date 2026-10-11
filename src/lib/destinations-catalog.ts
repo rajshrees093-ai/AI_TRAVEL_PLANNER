@@ -1,4 +1,21 @@
 import { DestinationInfo, VerifiedPlace } from "./types";
+import {
+  SACRED_DESTINATIONS,
+  SACRED_VERIFIED_PLACES,
+  WORLDWIDE_CITIES_AND_HOMETOWNS,
+  findCityCoordinates,
+  buildSacredPlacesForDestination,
+  CityDirectoryEntry,
+} from "./sacred-and-global-catalog";
+
+export {
+  SACRED_DESTINATIONS,
+  SACRED_VERIFIED_PLACES,
+  WORLDWIDE_CITIES_AND_HOMETOWNS,
+  findCityCoordinates,
+  buildSacredPlacesForDestination,
+};
+export type { CityDirectoryEntry };
 
 export const POPULAR_DESTINATIONS: DestinationInfo[] = [
   {
@@ -1162,9 +1179,21 @@ export const VERIFIED_PLACES_CATALOG: VerifiedPlace[] = [
   },
 ];
 
+export const ALL_DESTINATIONS: DestinationInfo[] = [
+  ...POPULAR_DESTINATIONS,
+  ...SACRED_DESTINATIONS,
+];
+
+export const ALL_VERIFIED_PLACES: VerifiedPlace[] = [
+  ...VERIFIED_PLACES_CATALOG,
+  ...SACRED_VERIFIED_PLACES,
+];
+
 export function findDestinationInfo(nameOrSlugOrPlaceId: string): DestinationInfo {
   const q = nameOrSlugOrPlaceId.toLowerCase().trim();
-  const match = POPULAR_DESTINATIONS.find(
+
+  // 1. Check popular & sacred showcase destinations
+  const match = ALL_DESTINATIONS.find(
     (d) =>
       d.slug === q ||
       d.name.toLowerCase() === q ||
@@ -1174,8 +1203,74 @@ export function findDestinationInfo(nameOrSlugOrPlaceId: string): DestinationInf
   );
   if (match) return match;
 
-  // Dynamic fallback destination info for any city searched by the user
+  // 2. Check worldwide & Indian hometown/city directory
+  const cityMatch = WORLDWIDE_CITIES_AND_HOMETOWNS.find(
+    (c) =>
+      c.placeId.toLowerCase() === q ||
+      c.name.toLowerCase() === q ||
+      c.name.toLowerCase().includes(q) ||
+      q.includes(c.name.toLowerCase())
+  );
+  if (cityMatch) {
+    const isSacred = cityMatch.regionType === "Sacred & Holy Place";
+    const cleanCitySlug = cityMatch.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    return {
+      placeId: cityMatch.placeId,
+      slug: cleanCitySlug,
+      name: cityMatch.name,
+      stateOrCountry: cityMatch.stateOrCountry,
+      category: isSacred
+        ? "Sacred & Spiritual Pilgrimage"
+        : cityMatch.regionType === "Indian City"
+        ? "Indian Heritage & City Break"
+        : "Global City & Cultural Hub",
+      tagline: isSacred
+        ? `Revered shrines, sacred darshan corridors, and serene rituals in ${cityMatch.name}.`
+        : `Signature landmarks, vibrant neighborhoods, and local flavors in ${cityMatch.name}.`,
+      description: isSacred
+        ? `Experience spiritual peace, historic temples and shrines, traditional sattvic dining, and cultural heritage across ${cityMatch.name}.`
+        : `Explore ${cityMatch.name}'s iconic sights, cultural quarters, sacred heritage landmarks, and neighborhood dining tailored to your schedule.`,
+      heroImage: isSacred
+        ? "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1600&q=85"
+        : "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1600&q=85",
+      lat: cityMatch.lat,
+      lng: cityMatch.lng,
+      defaultCurrency: "INR",
+      suggestedMinDailyPerPersonINR:
+        cityMatch.regionType === "Global City" ? 9500 : 2800,
+      bestMonths: "Oct – Mar (Ideal Season)",
+      weatherSummary: {
+        condition: "Pleasant & Clear",
+        tempRangeC: "18°C – 29°C",
+        advisory: isSacred
+          ? "Modest traditional attire recommended for shrine and temple visits."
+          : "Comfortable walking footwear recommended for sightseeing.",
+      },
+    };
+  }
+
+  // 3. Dynamic fallback destination info for any custom town, village, or shrine worldwide
   const cleanName = nameOrSlugOrPlaceId.split(",")[0].trim() || "Custom Destination";
+  const lowerClean = cleanName.toLowerCase();
+  const looksSacred =
+    lowerClean.includes("temple") ||
+    lowerClean.includes("mandir") ||
+    lowerClean.includes("dham") ||
+    lowerClean.includes("jyotirlinga") ||
+    lowerClean.includes("devi") ||
+    lowerClean.includes("sahib") ||
+    lowerClean.includes("dargah") ||
+    lowerClean.includes("church") ||
+    lowerClean.includes("mosque") ||
+    lowerClean.includes("masjid") ||
+    lowerClean.includes("monastery") ||
+    lowerClean.includes("shrine") ||
+    lowerClean.includes("tirath") ||
+    lowerClean.includes("kund");
+
   return {
     placeId: `ChIJ_custom_${cleanName.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
     slug: cleanName.toLowerCase().replace(/[^a-z0-9]/g, "-"),
@@ -1183,33 +1278,65 @@ export function findDestinationInfo(nameOrSlugOrPlaceId: string): DestinationInf
     stateOrCountry:
       nameOrSlugOrPlaceId.includes(",")
         ? nameOrSlugOrPlaceId.split(",").slice(1).join(",").trim()
-        : "Global Destination",
-    category: "Culture, Sights & Local Flavors",
-    tagline: `Curated landmarks, neighborhood dining, and scenic routes in ${cleanName}.`,
-    description: `Discover ${cleanName}'s signature landmarks, local culinary stops, cultural quarters, and scenic viewpoints tailored to your pace.`,
-    heroImage:
-      "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1600&q=85",
+        : "Worldwide Destination",
+    category: looksSacred
+      ? "Sacred & Spiritual Pilgrimage"
+      : "Culture, Sights & Local Flavors",
+    tagline: looksSacred
+      ? `Sacred darshan, peaceful parikrama walks, and spiritual heritage in ${cleanName}.`
+      : `Curated landmarks, neighborhood dining, and scenic routes in ${cleanName}.`,
+    description: looksSacred
+      ? `Plan a serene pilgrimage to ${cleanName} with timed darshan slots, sacred ghats or shrines, and pure vegetarian dining stops.`
+      : `Discover ${cleanName}'s signature landmarks, local culinary stops, sacred heritage sites, and scenic viewpoints tailored to your pace.`,
+    heroImage: looksSacred
+      ? "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1600&q=85"
+      : "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1600&q=85",
     lat: 28.6139,
     lng: 77.209,
     defaultCurrency: "INR",
-    suggestedMinDailyPerPersonINR: 3500,
+    suggestedMinDailyPerPersonINR: 3200,
     bestMonths: "Year-round",
     weatherSummary: {
       condition: "Pleasant",
       tempRangeC: "18°C – 27°C",
-      advisory: "Check local day-before forecasts for outdoor sightseeing segments.",
+      advisory: looksSacred
+        ? "Carry modest attire and check morning/evening aarti timings."
+        : "Check local day-before forecasts for outdoor sightseeing segments.",
     },
   };
 }
 
 export function getCandidatePlacesForDestination(destinationName: string): VerifiedPlace[] {
   const dest = findDestinationInfo(destinationName);
-  const directMatches = VERIFIED_PLACES_CATALOG.filter(
-    (p) => p.destinationSlug === dest.slug || p.destinationName.toLowerCase() === dest.name.toLowerCase()
+  const directMatches = ALL_VERIFIED_PLACES.filter(
+    (p) =>
+      p.destinationSlug === dest.slug ||
+      p.destinationName.toLowerCase() === dest.name.toLowerCase()
   );
 
+  const isSacredDestination =
+    dest.category.toLowerCase().includes("sacred") ||
+    dest.category.toLowerCase().includes("spiritual") ||
+    dest.category.toLowerCase().includes("pilgrimage") ||
+    SACRED_DESTINATIONS.some((s) => s.slug === dest.slug);
+
+  if (isSacredDestination) {
+    const sacredPlaces = buildSacredPlacesForDestination(dest);
+    const combined = [...directMatches];
+    for (const sp of sacredPlaces) {
+      if (!combined.some((existing) => existing.placeId === sp.placeId)) {
+        combined.push(sp);
+      }
+    }
+    for (const sup of buildSupplementalPlacesForDestination(dest)) {
+      if (!combined.some((existing) => existing.placeId === sup.placeId)) {
+        combined.push(sup);
+      }
+    }
+    return combined;
+  }
+
   if (directMatches.length >= 4) {
-    // If we have 4-8 places, also generate a couple more verified-format local places if a longer trip is requested
     return [...directMatches, ...buildSupplementalPlacesForDestination(dest)];
   }
 
@@ -1219,14 +1346,36 @@ export function getCandidatePlacesForDestination(destinationName: string): Verif
 function buildSupplementalPlacesForDestination(dest: DestinationInfo): VerifiedPlace[] {
   const baseLat = dest.lat;
   const baseLng = dest.lng;
-  const city = dest.name;
+  const city = dest.name.split("(")[0].trim();
 
   return [
+    {
+      placeId: `ChIJ_${dest.slug}_sacred_temple_shrine`,
+      name: `${city} Historic Temple & Spiritual Sanctuary`,
+      destinationSlug: dest.slug,
+      destinationName: dest.name,
+      category: "Historical",
+      subcategory: "Revered Temple & Spiritual Heritage",
+      description: `Visit ${city}'s most revered temple and spiritual sanctuary, known for peaceful morning prayers, intricate architecture, and devotional heritage.`,
+      address: `Sacred Heritage Precinct, ${city}`,
+      lat: Number((baseLat + 0.008).toFixed(4)),
+      lng: Number((baseLng - 0.006).toFixed(4)),
+      rating: 4.8,
+      reviewCount: 14200,
+      openingHours: "06:00 AM – 09:00 PM",
+      priceLevel: "Free",
+      estimatedCostINR: 0,
+      recommendedDurationMins: 90,
+      photoUrl:
+        "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=900&q=80",
+      isOutdoor: true,
+      whyVisit: `Iconic spiritual and architectural landmark in ${city}.`,
+    },
     {
       placeId: `ChIJ_${dest.slug}_heritage_square`,
       name: `${city} Heritage Old Quarter & Citadel`,
       destinationSlug: dest.slug,
-      destinationName: city,
+      destinationName: dest.name,
       category: "Historical",
       subcategory: "Historic Landmark",
       description: `Walk through ${city}'s historic architectural core, featuring centuries-old gateways, courtyards, and local storytelling.`,
@@ -1240,17 +1389,17 @@ function buildSupplementalPlacesForDestination(dest: DestinationInfo): VerifiedP
       estimatedCostINR: 250,
       recommendedDurationMins: 105,
       photoUrl:
-        "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1603262110263-fb0112e7cc33?auto=format&fit=crop&w=900&q=80",
       isOutdoor: true,
     },
     {
       placeId: `ChIJ_${dest.slug}_artisan_bistro`,
       name: `The Courtyard Kitchen — ${city}`,
       destinationSlug: dest.slug,
-      destinationName: city,
+      destinationName: dest.name,
       category: "Restaurant",
       subcategory: "Regional Tasting Kitchen",
-      description: `Celebrated local kitchen in ${city} serving regional heirloom recipes with seasonal produce.`,
+      description: `Celebrated local kitchen in ${city} serving regional heirloom recipes and pure vegetarian thali options with seasonal produce.`,
       address: `Heritage Market Road, ${city}`,
       lat: Number((baseLat + 0.006).toFixed(4)),
       lng: Number((baseLng + 0.012).toFixed(4)),
@@ -1269,7 +1418,7 @@ function buildSupplementalPlacesForDestination(dest: DestinationInfo): VerifiedP
       placeId: `ChIJ_${dest.slug}_botanical_viewpoint`,
       name: `${city} Botanical Overlook & Sunset Promenade`,
       destinationSlug: dest.slug,
-      destinationName: city,
+      destinationName: dest.name,
       category: "Nature",
       subcategory: "Scenic Viewpoint & Gardens",
       description: `Panoramic viewpoint and terraced gardens overlooking ${city}, popular for golden-hour photography.`,
@@ -1283,14 +1432,14 @@ function buildSupplementalPlacesForDestination(dest: DestinationInfo): VerifiedP
       estimatedCostINR: 0,
       recommendedDurationMins: 90,
       photoUrl:
-        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=900&q=80",
       isOutdoor: true,
     },
     {
       placeId: `ChIJ_${dest.slug}_roastery_cafe`,
       name: `Atelier Roastery & Bakehouse ${city}`,
       destinationSlug: dest.slug,
-      destinationName: city,
+      destinationName: dest.name,
       category: "Café",
       subcategory: "Specialty Coffee & Pastries",
       description: `Sunlit specialty coffee bar and sourdough bakery loved by travelers and local creatives.`,
@@ -1312,7 +1461,7 @@ function buildSupplementalPlacesForDestination(dest: DestinationInfo): VerifiedP
       placeId: `ChIJ_${dest.slug}_craft_village`,
       name: `${city} Craft Guild & Hidden Courtyard`,
       destinationSlug: dest.slug,
-      destinationName: city,
+      destinationName: dest.name,
       category: "Hidden Gem",
       subcategory: "Artisan Cooperative & Gallery",
       description: `Quiet community-run craft courtyard where local weavers, potters, and painters showcase traditional techniques.`,
@@ -1336,7 +1485,7 @@ function buildSupplementalPlacesForDestination(dest: DestinationInfo): VerifiedP
       placeId: `ChIJ_${dest.slug}_bazaar_walk`,
       name: `${city} Evening Bazaar & Street Food Walk`,
       destinationSlug: dest.slug,
-      destinationName: city,
+      destinationName: dest.name,
       category: "Shopping",
       subcategory: "Historic Market & Culinary Walk",
       description: `Explore lantern-lit market arcades filled with spices, handicrafts, and hygienic signature street delicacies.`,
@@ -1356,3 +1505,119 @@ function buildSupplementalPlacesForDestination(dest: DestinationInfo): VerifiedP
     },
   ];
 }
+
+export interface HometownTransitRecommendation {
+  originCity: string;
+  originStateOrCountry: string;
+  destinationName: string;
+  destinationStateOrCountry: string;
+  aerialDistanceKm: number;
+  roadDistanceKm: number;
+  recommendedPrimaryMode: "Direct / Connecting Flight" | "Express Train / Vande Bharat" | "Highway Drive / Intercity Cab" | "Local City Transfer";
+  flightEstimate: string;
+  trainEstimate: string | null;
+  roadEstimate: string | null;
+  routeSummaryNote: string;
+}
+
+/**
+ * Calculates distance & multi-modal transit guidance from ANY hometown worldwide to ANY destination/holy place
+ */
+export function computeHometownToDestinationTransit(
+  startCityName: string,
+  destinationName: string
+): HometownTransitRecommendation {
+  const origin = findCityCoordinates(startCityName || "New Delhi");
+  const dest = findDestinationInfo(destinationName || "Varanasi");
+
+  const R = 6371; // km
+  const dLat = ((dest.lat - origin.lat) * Math.PI) / 180;
+  const dLng = ((dest.lng - origin.lng) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((origin.lat * Math.PI) / 180) *
+      Math.cos((dest.lat * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const aerialDistanceKm = Math.max(5, Math.round(R * c));
+  const roadDistanceKm = Math.round(aerialDistanceKm * 1.28);
+
+  const bothInIndia =
+    origin.stateOrCountry.toLowerCase().includes("india") &&
+    dest.stateOrCountry.toLowerCase().includes("india");
+
+  if (aerialDistanceKm <= 45) {
+    return {
+      originCity: origin.name,
+      originStateOrCountry: origin.stateOrCountry,
+      destinationName: dest.name,
+      destinationStateOrCountry: dest.stateOrCountry,
+      aerialDistanceKm,
+      roadDistanceKm,
+      recommendedPrimaryMode: "Local City Transfer",
+      flightEstimate: "Same metropolitan region (No flight needed)",
+      trainEstimate: "Suburban rail / Metro (~45 mins)",
+      roadEstimate: `~${Math.max(25, Math.round(roadDistanceKm * 1.6))} mins by cab (${roadDistanceKm} km)`,
+      routeSummaryNote: `You are right next to ${dest.name}! Start directly from ${origin.name} via local cab or metro.`,
+    };
+  }
+
+  if (aerialDistanceKm <= 340 && bothInIndia) {
+    const driveHours = (roadDistanceKm / 55).toFixed(1);
+    const trainHours = (roadDistanceKm / 72).toFixed(1);
+    return {
+      originCity: origin.name,
+      originStateOrCountry: origin.stateOrCountry,
+      destinationName: dest.name,
+      destinationStateOrCountry: dest.stateOrCountry,
+      aerialDistanceKm,
+      roadDistanceKm,
+      recommendedPrimaryMode: "Highway Drive / Intercity Cab",
+      flightEstimate: `Short regional hop (~1 hr air time if applicable)`,
+      trainEstimate: `~${trainHours} hrs via Vande Bharat / Shatabdi Express`,
+      roadEstimate: `~${driveHours} hrs via National Highway (${roadDistanceKm} km)`,
+      routeSummaryNote: `Easy direct journey from ${origin.name} to ${dest.name} by NH expressway drive (~${driveHours} hrs) or intercity express train.`,
+    };
+  }
+
+  if (aerialDistanceKm <= 950 && bothInIndia) {
+    const flightHours = (aerialDistanceKm / 650 + 0.8).toFixed(1);
+    const trainHours = (roadDistanceKm / 68).toFixed(1);
+    const driveHours = (roadDistanceKm / 55).toFixed(1);
+    return {
+      originCity: origin.name,
+      originStateOrCountry: origin.stateOrCountry,
+      destinationName: dest.name,
+      destinationStateOrCountry: dest.stateOrCountry,
+      aerialDistanceKm,
+      roadDistanceKm,
+      recommendedPrimaryMode: "Express Train / Vande Bharat",
+      flightEstimate: `~${flightHours} hrs Flight to ${dest.name} / nearest airport`,
+      trainEstimate: `~${trainHours} hrs via Rajdhani / Vande Bharat / Superfast Express`,
+      roadEstimate: `~${driveHours} hrs road drive (${roadDistanceKm} km)`,
+      routeSummaryNote: `Well connected from ${origin.name}: choose a ~${flightHours} hr flight or an overnight/day express train (~${trainHours} hrs) to ${dest.name}.`,
+    };
+  }
+
+  // Long-haul domestic or international route
+  const flightHours = (aerialDistanceKm / 760 + 1.1).toFixed(1);
+  return {
+    originCity: origin.name,
+    originStateOrCountry: origin.stateOrCountry,
+    destinationName: dest.name,
+    destinationStateOrCountry: dest.stateOrCountry,
+    aerialDistanceKm,
+    roadDistanceKm,
+    recommendedPrimaryMode: "Direct / Connecting Flight",
+    flightEstimate: `~${flightHours} hrs flight from ${origin.name} to ${dest.name} (or nearest hub airport)`,
+    trainEstimate: bothInIndia
+      ? `~${Math.round(roadDistanceKm / 65)} hrs long-distance Rajdhani / Superfast train (${roadDistanceKm} km)`
+      : null,
+    roadEstimate: bothInIndia ? `${roadDistanceKm.toLocaleString()} km multi-day highway route` : null,
+    routeSummaryNote: bothInIndia
+      ? `Fly from ${origin.name} to ${dest.name} (~${flightHours} hrs) or take a direct long-distance express train (${roadDistanceKm} km).`
+      : `International / Long-haul connection from ${origin.name} (${origin.stateOrCountry}) to ${dest.name} (~${flightHours} hrs total air time, ${aerialDistanceKm.toLocaleString()} km).`,
+  };
+}
+

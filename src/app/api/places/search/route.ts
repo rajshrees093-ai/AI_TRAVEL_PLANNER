@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   POPULAR_DESTINATIONS,
-  VERIFIED_PLACES_CATALOG,
+  SACRED_DESTINATIONS,
+  ALL_DESTINATIONS,
+  ALL_VERIFIED_PLACES,
+  WORLDWIDE_CITIES_AND_HOMETOWNS,
   getCandidatePlacesForDestination,
 } from "@/lib/destinations-catalog";
 import { isLiveGooglePlacesMode } from "@/lib/ai-engine";
@@ -12,22 +15,33 @@ export async function GET(req: NextRequest) {
     const query = (searchParams.get("q") || "").trim();
     const destination = (searchParams.get("destination") || "").trim();
     const category = (searchParams.get("category") || "ALL").trim();
-    const type = (searchParams.get("type") || "destinations").trim(); // "destinations" | "places"
+    const type = (searchParams.get("type") || "destinations").trim(); // "destinations" | "places" | "hometowns"
 
+    // 1. Places & Restaurants Search (Attractions, Temples, Shrines, Dining)
     if (type === "places") {
       const places = destination
         ? getCandidatePlacesForDestination(destination)
-        : VERIFIED_PLACES_CATALOG;
+        : ALL_VERIFIED_PLACES;
 
       const filtered = places.filter((p) => {
         const matchesQuery =
           !query ||
           p.name.toLowerCase().includes(query.toLowerCase()) ||
           p.description.toLowerCase().includes(query.toLowerCase()) ||
-          p.subcategory.toLowerCase().includes(query.toLowerCase());
+          p.subcategory.toLowerCase().includes(query.toLowerCase()) ||
+          p.destinationName.toLowerCase().includes(query.toLowerCase());
         const matchesCat =
           category === "ALL" ||
           (category === "Hidden Gems" && p.isHiddenGem) ||
+          (category === "Sacred & Worship" &&
+            (p.subcategory.toLowerCase().includes("temple") ||
+              p.subcategory.toLowerCase().includes("shrine") ||
+              p.subcategory.toLowerCase().includes("jyotirlinga") ||
+              p.subcategory.toLowerCase().includes("gurudwara") ||
+              p.subcategory.toLowerCase().includes("ghat") ||
+              p.subcategory.toLowerCase().includes("aarti") ||
+              p.subcategory.toLowerCase().includes("darshan") ||
+              p.subcategory.toLowerCase().includes("sattvic"))) ||
           p.category.toLowerCase() === category.toLowerCase();
         return matchesQuery && matchesCat;
       });
@@ -38,124 +52,286 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Destination autocomplete search
-    if (isLiveGooglePlacesMode() && query.length >= 2) {
+    // 2. Worldwide Hometowns & Origin Cities Search (for "Traveling From" selector)
+    if (type === "hometowns") {
+      const qLower = query.toLowerCase();
+      const matchedCities = !query
+        ? WORLDWIDE_CITIES_AND_HOMETOWNS
+        : WORLDWIDE_CITIES_AND_HOMETOWNS.filter(
+            (c) =>
+              c.name.toLowerCase().includes(qLower) ||
+              c.stateOrCountry.toLowerCase().includes(qLower) ||
+              c.regionType.toLowerCase().includes(qLower)
+          );
+
+      // If user typed a hometown/town not in static list, attempt OpenStreetMap Nominatim geocoding
+      if (query.length >= 2 && matchedCities.length < 3) {
+        try {
+          const nomRes = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+              query
+            )}&limit=5&addressdetails=1`,
+            {
+              headers: {
+                "User-Agent": "RoamWise-TravelPlanner/1.0",
+                "Accept-Language": "en",
+              },
+              signal: AbortSignal.timeout(3500),
+            }
+          );
+          if (nomRes.ok) {
+            const nomData = await nomRes.json();
+            if (Array.isArray(nomData)) {
+              for (const item of nomData) {
+                const name =
+                  item.name ||
+                  item.display_name?.split(",")[0]?.trim() ||
+                  query;
+                const stateOrCountry =
+                  item.display_name
+                    ?.split(",")
+                    .slice(1, 3)
+                    .join(",")
+                    .trim() || "Worldwide City";
+                if (
+                  !matchedCities.some(
+                    (m) => m.name.toLowerCase() === name.toLowerCase()
+                  )
+                ) {
+                  matchedCities.push({
+                    placeId: `ChIJ_osm_${item.place_id || name.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
+                    name,
+                    stateOrCountry,
+                    regionType: stateOrCountry.toLowerCase().includes("india")
+                      ? "Indian City"
+                      : "Global City",
+                    lat: Number(item.lat) || 28.6139,
+                    lng: Number(item.lon) || 77.209,
+                  });
+                }
+              }
+            }
+          }
+        } catch {
+          // Graceful fallback if offline
+        }
+      }
+
+      if (query.length >= 2 && matchedCities.length === 0) {
+        const formatted = query.charAt(0).toUpperCase() + query.slice(1).trim();
+        matchedCities.push({
+          placeId: `ChIJ_hometown_${query.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
+          name: formatted,
+          stateOrCountry: "Worldwide Hometown",
+          regionType: "Global City",
+          lat: 28.6139,
+          lng: 77.209,
+        });
+      }
+
+      return NextResponse.json({
+        hometowns: matchedCities.slice(0, 40),
+      });
+    }
+
+    // 3. Destination & Worship/Holy Place Search
+    // Build unified catalog from POPULAR_DESTINATIONS + SACRED_DESTINATIONS + WORLDWIDE_CITIES_AND_HOMETOWNS
+    const cityDestinations = WORLDWIDE_CITIES_AND_HOMETOWNS.filter(
+      (c) =>
+        !ALL_DESTINATIONS.some(
+          (d) =>
+            d.name.toLowerCase() === c.name.toLowerCase() ||
+            d.name.toLowerCase().includes(c.name.toLowerCase())
+        )
+    ).map((c) => {
+      const isSacred = c.regionType === "Sacred & Holy Place";
+      const slug = c.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+      return {
+        placeId: c.placeId,
+        slug,
+        name: c.name,
+        stateOrCountry: c.stateOrCountry,
+        category: isSacred
+          ? "Sacred & Spiritual Pilgrimage"
+          : c.regionType === "Indian City"
+          ? "Indian City & Heritage Hub"
+          : "Global City & Cultural Hub",
+        tagline: isSacred
+          ? `Sacred shrines, darshan corridors, and spiritual peace in ${c.name}.`
+          : `Iconic landmarks, local neighborhoods, and curated routes in ${c.name}.`,
+        heroImage: isSacred
+          ? "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80"
+          : c.regionType === "Indian City"
+          ? "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1200&q=80"
+          : "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80",
+        lat: c.lat,
+        lng: c.lng,
+        regionType: c.regionType,
+      };
+    });
+
+    const fullCatalog = [
+      ...POPULAR_DESTINATIONS.map((d) => ({
+        ...d,
+        regionType: d.stateOrCountry.toLowerCase().includes("india")
+          ? "Indian City"
+          : "Global City",
+      })),
+      ...SACRED_DESTINATIONS.map((d) => ({
+        ...d,
+        regionType: "Sacred & Holy Place",
+      })),
+      ...cityDestinations,
+    ];
+
+    // Filter by category tab if requested
+    let pool = fullCatalog;
+    if (category === "SACRED") {
+      pool = fullCatalog.filter(
+        (d) =>
+          d.regionType === "Sacred & Holy Place" ||
+          d.category.toLowerCase().includes("sacred") ||
+          d.category.toLowerCase().includes("spiritual") ||
+          d.category.toLowerCase().includes("jyotirlinga") ||
+          d.category.toLowerCase().includes("dham") ||
+          d.category.toLowerCase().includes("pilgrimage") ||
+          d.slug === "rishikesh"
+      );
+    } else if (category === "POPULAR") {
+      pool = POPULAR_DESTINATIONS.map((d) => ({
+        ...d,
+        regionType: "Popular",
+      }));
+    } else if (category === "INDIAN_CITIES") {
+      pool = fullCatalog.filter((d) =>
+        d.stateOrCountry.toLowerCase().includes("india")
+      );
+    } else if (category === "GLOBAL_CITIES") {
+      pool = fullCatalog.filter(
+        (d) => !d.stateOrCountry.toLowerCase().includes("india")
+      );
+    }
+
+    const qLower = query.toLowerCase();
+    const matches = !query
+      ? pool
+      : fullCatalog.filter(
+          (d) =>
+            d.name.toLowerCase().includes(qLower) ||
+            d.stateOrCountry.toLowerCase().includes(qLower) ||
+            d.category.toLowerCase().includes(qLower) ||
+            (d.tagline && d.tagline.toLowerCase().includes(qLower))
+        );
+
+    // Also try live OpenStreetMap Nominatim geocoding when searching for a specific town, temple, or city worldwide
+    if (query.length >= 2 && matches.length < 4) {
       try {
-        const res = await fetch(
-          "https://places.googleapis.com/v1/places:autocomplete",
+        const nomRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            query
+          )}&limit=4&addressdetails=1`,
           {
-            method: "POST",
             headers: {
-              "Content-Type": "application/json",
-              "X-Goog-Api-Key": process.env.GOOGLE_MAPS_SERVER_KEY!,
+              "User-Agent": "RoamWise-TravelPlanner/1.0",
+              "Accept-Language": "en",
             },
-            body: JSON.stringify({
-              input: query,
-              includedPrimaryTypes: ["(cities)"],
-            }),
-            signal: AbortSignal.timeout(5000),
+            signal: AbortSignal.timeout(3500),
           }
         );
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.suggestions) && data.suggestions.length > 0) {
-            const suggestions = data.suggestions
-              .filter((s: any) => s.placePrediction)
-              .map((s: any) => ({
-                placeId: s.placePrediction.placeId,
-                name:
-                  s.placePrediction.structuredFormat?.mainText?.text ||
-                  s.placePrediction.text?.text,
-                stateOrCountry:
-                  s.placePrediction.structuredFormat?.secondaryText?.text ||
-                  "Verified Destination",
-                category: "Verified Google Place",
-                heroImage:
-                  "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80",
-              }));
-            return NextResponse.json({
-              destinations: suggestions,
-              isLiveApi: true,
-            });
+        if (nomRes.ok) {
+          const nomData = await nomRes.json();
+          if (Array.isArray(nomData)) {
+            for (const item of nomData) {
+              const name =
+                item.name ||
+                item.display_name?.split(",")[0]?.trim() ||
+                query;
+              const stateOrCountry =
+                item.display_name
+                  ?.split(",")
+                  .slice(1, 3)
+                  .join(",")
+                  .trim() || "Worldwide Destination";
+              const looksSacred =
+                query.toLowerCase().includes("temple") ||
+                query.toLowerCase().includes("mandir") ||
+                query.toLowerCase().includes("dham") ||
+                query.toLowerCase().includes("shrine") ||
+                query.toLowerCase().includes("church") ||
+                query.toLowerCase().includes("mosque") ||
+                item.type === "place_of_worship";
+
+              if (
+                !matches.some(
+                  (m) => m.name.toLowerCase() === name.toLowerCase()
+                )
+              ) {
+                matches.push({
+                  placeId: `ChIJ_osm_${item.place_id || name.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
+                  slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+                  name,
+                  stateOrCountry,
+                  category: looksSacred
+                    ? "Sacred & Spiritual Pilgrimage"
+                    : "Verified Worldwide City & Destination",
+                  tagline: looksSacred
+                    ? `Sacred darshan, spiritual heritage, and local rituals in ${name}.`
+                    : `Explore ${name}'s top attractions, cultural heritage, and dining routes.`,
+                  heroImage: looksSacred
+                    ? "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80"
+                    : "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80",
+                  lat: Number(item.lat) || 28.6139,
+                  lng: Number(item.lon) || 77.209,
+                  regionType: looksSacred ? "Sacred & Holy Place" : "Global City",
+                });
+              }
+            }
           }
         }
       } catch {
-        // Fall back to curated catalog
+        // Ignore network errors and rely on static + custom fallback
       }
     }
 
-    const extraCities = [
-      {
-        placeId: "ChIJ_udaipur_rj",
-        slug: "udaipur",
-        name: "Udaipur",
-        stateOrCountry: "Rajasthan, India",
-        category: "Lakes & Palaces",
-        tagline: "Marble lake palaces, Aravalli sunsets, and Mewar heritage.",
-        heroImage:
-          "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        placeId: "ChIJ_kyoto_jp",
-        slug: "kyoto",
-        name: "Kyoto",
-        stateOrCountry: "Japan",
-        category: "Zen Gardens & Shrines",
-        tagline: "Bamboo groves, golden pavilions, and historic teahouses.",
-        heroImage:
-          "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        placeId: "ChIJ_paris_fr",
-        slug: "paris",
-        name: "Paris",
-        stateOrCountry: "France",
-        category: "Art, Cafés & Architecture",
-        tagline: "Seine boulevards, world-class museums, and neighborhood patisseries.",
-        heroImage:
-          "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80",
-      },
-      {
-        placeId: "ChIJ_ladakh_in",
-        slug: "ladakh",
-        name: "Leh Ladakh",
-        stateOrCountry: "Ladakh, India",
-        category: "High-Altitude Monasteries & Lakes",
-        tagline: "Turquoise alpine lakes, Buddhist gompas, and dramatic mountain passes.",
-        heroImage:
-          "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
-      },
-    ];
-
-    const allDests = [...POPULAR_DESTINATIONS, ...extraCities];
-    const matches = !query
-      ? POPULAR_DESTINATIONS
-      : allDests.filter(
-          (d) =>
-            d.name.toLowerCase().includes(query.toLowerCase()) ||
-            d.stateOrCountry.toLowerCase().includes(query.toLowerCase()) ||
-            d.category.toLowerCase().includes(query.toLowerCase())
-        );
-
-    // If user typed a valid custom city name not in predefined list, offer a verified custom entry
+    // If user typed a valid custom city or worship place not found above, offer an instant custom entry
     if (query.length >= 2 && matches.length === 0) {
       const formattedName =
         query.charAt(0).toUpperCase() + query.slice(1).trim();
+      const looksSacred =
+        qLower.includes("temple") ||
+        qLower.includes("mandir") ||
+        qLower.includes("dham") ||
+        qLower.includes("devi") ||
+        qLower.includes("sahib") ||
+        qLower.includes("shrine") ||
+        qLower.includes("church") ||
+        qLower.includes("mosque");
       matches.push({
-        placeId: `ChIJ_custom_${query.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
-        slug: query.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+        placeId: `ChIJ_custom_${qLower.replace(/[^a-z0-9]/g, "_")}`,
+        slug: qLower.replace(/[^a-z0-9]/g, "-"),
         name: formattedName,
-        stateOrCountry: "Custom Destination",
-        category: "Culture, Landmarks & Local Dining",
-        tagline: `Explore ${formattedName}'s top attractions, local dining, and scenic routes.`,
-        heroImage:
-          "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80",
+        stateOrCountry: "Worldwide Destination",
+        category: looksSacred
+          ? "Sacred & Spiritual Pilgrimage"
+          : "Culture, Landmarks & Local Dining",
+        tagline: looksSacred
+          ? `Sacred darshan timings, temple heritage, and sattvic dining in ${formattedName}.`
+          : `Explore ${formattedName}'s top attractions, local dining, and scenic routes.`,
+        heroImage: looksSacred
+          ? "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80"
+          : "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80",
+        lat: 28.6139,
+        lng: 77.209,
+        regionType: looksSacred ? "Sacred & Holy Place" : "Global City",
       });
     }
 
     return NextResponse.json({
       destinations: matches,
-      isLiveApi: false,
+      isLiveApi: isLiveGooglePlacesMode(),
     });
   } catch (error) {
     return NextResponse.json(

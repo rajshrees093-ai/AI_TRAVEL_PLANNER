@@ -5,7 +5,7 @@ import { recalculateTripMetrics } from "@/lib/ai-engine";
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId") || "user-roamwise-demo";
+    const userId = searchParams.get("userId") || "";
     const trips = await getTripsForUser(userId);
     return NextResponse.json({ trips });
   } catch (error) {

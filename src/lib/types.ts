@@ -57,7 +57,14 @@ export interface DestinationInfo {
   suggestedMinDailyPerPersonINR: number;
   bestMonths: string;
   weatherSummary: {
-    condition: "Sunny" | "Pleasant" | "Partly Cloudy" | "Tropical Shower" | "Crisp Mountain Air";
+    condition:
+      | "Sunny"
+      | "Pleasant"
+      | "Pleasant & Clear"
+      | "Partly Cloudy"
+      | "Tropical Shower"
+      | "Crisp Mountain Air"
+      | string;
     tempRangeC: string;
     advisory: string;
   };

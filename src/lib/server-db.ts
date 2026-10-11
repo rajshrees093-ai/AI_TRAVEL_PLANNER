@@ -2,10 +2,13 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { GenerationJob, SharedTripLink, Trip, UserProfile } from "./types";
-import { generateCompleteTripItinerary } from "./ai-engine";
+
+export interface StoredUserAccount extends UserProfile {
+  passwordHash: string;
+}
 
 interface ServerDatabaseShape {
-  users: UserProfile[];
+  users: StoredUserAccount[];
   trips: Trip[];
   jobs: GenerationJob[];
   sharedLinks: SharedTripLink[];
@@ -34,20 +37,91 @@ export function hashShareToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+export function hashPassword(password: string): string {
+  return crypto
+    .createHash("sha256")
+    .update(`roamwise_salt_v1:${password}`)
+    .digest("hex");
+}
+
+function stripPassword(account: StoredUserAccount): UserProfile {
+  const { passwordHash: _unused, ...profile } = account;
+  return profile;
+}
+
 let memoryStore: ServerDatabaseShape | null = null;
 
-async function createSeedStore(): Promise<ServerDatabaseShape> {
-  const defaultUser: UserProfile = {
-    id: "user-roamwise-demo",
-    name: "Aarav Sharma",
-    email: "aarav@roamwise.travel",
-    homeCity: "New Delhi",
+async function createEmptyStore(): Promise<ServerDatabaseShape> {
+  return {
+    users: [],
+    trips: [],
+    jobs: [],
+    sharedLinks: [],
+  };
+}
+
+export async function getServerStore(): Promise<ServerDatabaseShape> {
+  if (memoryStore) return memoryStore;
+
+  try {
+    if (fs.existsSync(DB_FILE_PATH)) {
+      const raw = fs.readFileSync(DB_FILE_PATH, "utf-8");
+      const parsed = JSON.parse(raw) as ServerDatabaseShape;
+      if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.trips)) {
+        // Filter out any legacy demo user if present
+        parsed.users = parsed.users.filter((u) => u.id !== "user-roamwise-demo");
+        memoryStore = parsed;
+        return memoryStore;
+      }
+    }
+  } catch {
+    // Re-initialize if corrupted
+  }
+
+  memoryStore = await createEmptyStore();
+  saveServerStore(memoryStore);
+  return memoryStore;
+}
+
+export function saveServerStore(store: ServerDatabaseShape): void {
+  memoryStore = store;
+  try {
+    fs.writeFileSync(DB_FILE_PATH, JSON.stringify(store, null, 2), "utf-8");
+  } catch {
+    // Read-only filesystem fallback stays in memoryStore
+  }
+}
+
+export async function registerUserInStore(input: {
+  name: string;
+  email: string;
+  password: string;
+  homeCity?: string;
+}): Promise<{ user?: UserProfile; error?: string }> {
+  const store = await getServerStore();
+  const normalizedEmail = input.email.trim().toLowerCase();
+
+  const existing = store.users.find(
+    (u) => u.email.toLowerCase() === normalizedEmail
+  );
+  if (existing) {
+    return {
+      error: "An account with this email already exists. Please sign in instead.",
+    };
+  }
+
+  const newAccount: StoredUserAccount = {
+    id: `user-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex")}`,
+    name: input.name.trim(),
+    email: normalizedEmail,
+    homeCity: input.homeCity?.trim() || "New Delhi",
     preferredCurrency: "INR",
+    passwordHash: hashPassword(input.password),
     preferences: {
       favoriteCategories: [
+        "Spiritual & Temple Darshan",
         "Nature and Mountains",
         "Food Exploration",
-        "Hidden Gems",
         "Historical Places",
       ],
       preferredPace: "Balanced",
@@ -59,158 +133,82 @@ async function createSeedStore(): Promise<ServerDatabaseShape> {
     createdAt: new Date().toISOString(),
   };
 
-  const manaliTrip = await generateCompleteTripItinerary(
-    {
-      destinationPlaceId: "ChIJp7jK8l7vBDkR0xV1m8kY8mM",
-      destinationName: "Manali",
-      destinationCountry: "Himachal Pradesh, India",
-      startCity: "New Delhi",
-      startDate: "2026-11-12",
-      endDate: "2026-11-15",
-      travelers: 2,
-      travelType: "Couple",
-      interests: [
-        "Nature and Mountains",
-        "Food Exploration",
-        "Hidden Gems",
-        "Photography",
-      ],
-      travelPace: "Balanced",
-      foodPreference: "No Preference",
-      specialInstructions:
-        "Prefer scenic cedar forest trails, authentic riverside cafés, and uncrowded viewpoints.",
-      budgetAmount: 42000,
-      budgetMode: "TOTAL",
-      currency: "INR",
-      travelTier: "Comfort",
-      includedExpenses: [
-        "Accommodation",
-        "Food",
-        "Activities",
-        "Local transport",
-      ],
-    },
-    defaultUser.id
-  );
-  manaliTrip.id = "trip-manali-flagship";
-  manaliTrip.status = "UPCOMING";
-
-  const goaTrip = await generateCompleteTripItinerary(
-    {
-      destinationPlaceId: "ChIJQbc2YxC6vzsRkkDzYv-H-Oo",
-      destinationName: "Goa",
-      destinationCountry: "Goa, India",
-      startCity: "Mumbai",
-      startDate: "2026-12-04",
-      endDate: "2026-12-06",
-      travelers: 4,
-      travelType: "Friends",
-      interests: [
-        "Beaches",
-        "Historical Places",
-        "Food Exploration",
-        "Hidden Gems",
-      ],
-      travelPace: "Relaxed",
-      foodPreference: "No Preference",
-      specialInstructions:
-        "Include Fontainhas Latin Quarter and quiet South Goa lagoons.",
-      budgetAmount: 68000,
-      budgetMode: "TOTAL",
-      currency: "INR",
-      travelTier: "Comfort",
-      includedExpenses: [
-        "Accommodation",
-        "Food",
-        "Activities",
-        "Local transport",
-      ],
-    },
-    defaultUser.id
-  );
-  goaTrip.id = "trip-goa-coastal";
-  goaTrip.status = "PLANNED";
-
-  const jaipurTrip = await generateCompleteTripItinerary(
-    {
-      destinationPlaceId: "ChIJgeJXTN9KbDkRCS7yDDrG4cI",
-      destinationName: "Jaipur",
-      destinationCountry: "Rajasthan, India",
-      startCity: "New Delhi",
-      startDate: "2026-09-10",
-      endDate: "2026-09-12",
-      travelers: 2,
-      travelType: "Family",
-      interests: ["Historical Places", "Art and Culture", "Food Exploration"],
-      travelPace: "Balanced",
-      foodPreference: "Vegetarian",
-      budgetAmount: 36000,
-      budgetMode: "TOTAL",
-      currency: "INR",
-      travelTier: "Comfort",
-      includedExpenses: ["Accommodation", "Food", "Activities", "Local transport"],
-    },
-    defaultUser.id
-  );
-  jaipurTrip.id = "trip-jaipur-royal";
-  jaipurTrip.status = "COMPLETED";
-
-  const demoShareToken = "roamwise-manali-escape-demo";
-  const demoSharedLink: SharedTripLink = {
-    id: "share-demo-1",
-    tripId: manaliTrip.id,
-    token: demoShareToken,
-    accessTokenHash: hashShareToken(demoShareToken),
-    includeBudget: true,
-    allowCollaboration: true,
-    isRevoked: false,
-    createdAt: new Date().toISOString(),
-  };
-  manaliTrip.sharedLinks = [demoSharedLink];
-
-  return {
-    users: [defaultUser],
-    trips: [manaliTrip, goaTrip, jaipurTrip],
-    jobs: [],
-    sharedLinks: [demoSharedLink],
-  };
+  store.users.push(newAccount);
+  saveServerStore(store);
+  return { user: stripPassword(newAccount) };
 }
 
-export async function getServerStore(): Promise<ServerDatabaseShape> {
-  if (memoryStore) return memoryStore;
+export async function authenticateUserInStore(input: {
+  email: string;
+  password: string;
+}): Promise<{ user?: UserProfile; error?: string }> {
+  const store = await getServerStore();
+  const normalizedEmail = input.email.trim().toLowerCase();
+  const account = store.users.find(
+    (u) => u.email.toLowerCase() === normalizedEmail
+  );
 
-  try {
-    if (fs.existsSync(DB_FILE_PATH)) {
-      const raw = fs.readFileSync(DB_FILE_PATH, "utf-8");
-      const parsed = JSON.parse(raw) as ServerDatabaseShape;
-      if (parsed && Array.isArray(parsed.trips) && parsed.trips.length > 0) {
-        memoryStore = parsed;
-        return memoryStore;
-      }
-    }
-  } catch {
-    // Re-seed if corrupted
+  if (!account) {
+    return {
+      error:
+        "No account found with this email address. Please create an account first.",
+    };
   }
 
-  memoryStore = await createSeedStore();
-  saveServerStore(memoryStore);
-  return memoryStore;
+  if (account.passwordHash !== hashPassword(input.password)) {
+    return {
+      error: "Incorrect password. Please double-check your password and try again.",
+    };
+  }
+
+  return { user: stripPassword(account) };
 }
 
-export function saveServerStore(store: ServerDatabaseShape): void {
-  memoryStore = store;
-  try {
-    fs.writeFileSync(DB_FILE_PATH, JSON.stringify(store, null, 2), "utf-8");
-  } catch {
-    // Read-only filesystem fallback (e.g., serverless lambda) stays in memoryStore
-  }
+export async function getUserByIdFromStore(
+  userId: string
+): Promise<UserProfile | null> {
+  const store = await getServerStore();
+  const found = store.users.find((u) => u.id === userId);
+  return found ? stripPassword(found) : null;
+}
+
+export async function updateUserInStore(
+  userId: string,
+  partial: Partial<UserProfile>
+): Promise<UserProfile | null> {
+  const store = await getServerStore();
+  const idx = store.users.findIndex((u) => u.id === userId);
+  if (idx < 0) return null;
+
+  const current = store.users[idx];
+  const updated: StoredUserAccount = {
+    ...current,
+    ...partial,
+    id: current.id,
+    passwordHash: current.passwordHash,
+    preferences: {
+      ...current.preferences,
+      ...(partial.preferences || {}),
+    },
+  };
+  store.users[idx] = updated;
+  saveServerStore(store);
+  return stripPassword(updated);
+}
+
+export async function deleteUserInStore(userId: string): Promise<boolean> {
+  const store = await getServerStore();
+  const beforeCount = store.users.length;
+  store.users = store.users.filter((u) => u.id !== userId);
+  store.trips = store.trips.filter((t) => t.userId !== userId);
+  saveServerStore(store);
+  return store.users.length < beforeCount;
 }
 
 export async function getTripsForUser(userId: string): Promise<Trip[]> {
+  if (!userId) return [];
   const store = await getServerStore();
-  return store.trips.filter(
-    (t) => t.userId === userId || t.userId === "user-roamwise-demo"
-  );
+  return store.trips.filter((t) => t.userId === userId);
 }
 
 export async function getTripByIdForUser(
@@ -220,11 +218,7 @@ export async function getTripByIdForUser(
   const store = await getServerStore();
   const trip = store.trips.find((t) => t.id === tripId);
   if (!trip) return { trip: null, unauthorized: false };
-  if (
-    trip.userId !== userId &&
-    trip.userId !== "user-roamwise-demo" &&
-    userId !== "user-roamwise-demo"
-  ) {
+  if (userId && trip.userId && trip.userId !== userId) {
     return { trip: null, unauthorized: true };
   }
   return { trip, unauthorized: false };
@@ -250,10 +244,7 @@ export async function deleteTripInStore(
   const idx = store.trips.findIndex((t) => t.id === tripId);
   if (idx < 0) return false;
   const target = store.trips[idx];
-  if (
-    target.userId !== userId &&
-    target.userId !== "user-roamwise-demo"
-  ) {
+  if (userId && target.userId && target.userId !== userId) {
     return false;
   }
   store.trips.splice(idx, 1);

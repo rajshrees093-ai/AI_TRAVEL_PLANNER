@@ -22,10 +22,12 @@ import {
   ShieldAlert,
   X,
   Sparkles,
+  FileDown,
 } from "lucide-react";
 import { Trip, SharedTripLink } from "@/lib/types";
 import { useRoamWise } from "@/context/RoamWiseContext";
 import { ConfirmDialog } from "@/components/ui/BrandComponents";
+import { IllustratedPdfModal } from "./IllustratedPdfModal";
 import { cn, formatCurrency, formatDateRange } from "@/lib/utils";
 
 interface TripHeaderShellProps {
@@ -37,6 +39,7 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const {
+    user,
     getTripById,
     saveOrUpdateTrip,
     deleteTrip,
@@ -49,6 +52,7 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
   const [unauthorized, setUnauthorized] = useState(false);
 
   const [moreOpen, setMoreOpen] = useState(false);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -76,7 +80,9 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
     let active = true;
     (async () => {
       try {
-        const res = await fetch(`/api/trips/${tripId}`);
+        const res = await fetch(
+          `/api/trips/${tripId}?userId=${encodeURIComponent(user?.id || "")}`
+        );
         if (res.status === 403) {
           if (active) {
             setUnauthorized(true);
@@ -361,12 +367,21 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
                 <span>{trip.isSaved ? "Saved" : "Save Trip"}</span>
               </button>
 
+              <button
+                type="button"
+                onClick={() => setPdfModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs font-semibold shadow-sm transition-colors"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                <span>Download PDF (with Photos)</span>
+              </button>
+
               <Link
                 href={`/trips/${trip.id}/edit`}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/25 text-xs font-semibold transition-colors"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>Edit Trip</span>
+                <span>Make Changes / Edit</span>
               </Link>
 
               <button
@@ -402,17 +417,17 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
                 </button>
 
                 {moreOpen && (
-                  <div className="absolute right-0 mt-2 w-52 bg-surface border border-border rounded-2xl shadow-elevated py-1.5 z-30 text-heading">
+                  <div className="absolute right-0 mt-2 w-56 bg-surface border border-border rounded-2xl shadow-elevated py-1.5 z-30 text-heading">
                     <button
                       type="button"
                       onClick={() => {
                         setMoreOpen(false);
-                        window.print();
+                        setPdfModalOpen(true);
                       }}
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium hover:bg-sand/40 text-left"
                     >
                       <Printer className="w-4 h-4 text-primary" />
-                      <span>Download / Print PDF</span>
+                      <span>Download PDF with Place Photos</span>
                     </button>
                     <button
                       type="button"
@@ -676,6 +691,12 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
           router.push("/dashboard");
         }}
         onCancel={() => setConfirmDelete(false)}
+      />
+
+      <IllustratedPdfModal
+        trip={trip}
+        open={pdfModalOpen}
+        onClose={() => setPdfModalOpen(false)}
       />
     </div>
   );

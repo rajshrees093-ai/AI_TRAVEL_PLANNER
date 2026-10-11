@@ -15,6 +15,7 @@ import {
   Palette,
   Gem,
   Smile,
+  Flame,
   Check,
   ArrowLeft,
   ArrowRight,
@@ -27,6 +28,7 @@ import { FoodPreference, TravelPace } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const INTEREST_OPTIONS = [
+  { label: "Spiritual & Temple Darshan", icon: Flame },
   { label: "Nature and Mountains", icon: Mountain },
   { label: "Beaches", icon: Palmtree },
   { label: "Adventure", icon: Compass },

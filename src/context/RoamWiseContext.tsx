@@ -7,11 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import {
-  Trip,
-  TripWizardDraft,
-  UserProfile,
-} from "@/lib/types";
+import { Trip, TripWizardDraft, UserProfile } from "@/lib/types";
 import { recalculateTripMetrics } from "@/lib/ai-engine";
 
 export interface ToastMessage {
@@ -42,16 +38,25 @@ interface RoamWiseContextValue {
   }) => void;
   saveDraftToContinueList: () => void;
   removeDraft: (draftId: string) => void;
-  refreshTrips: () => Promise<void>;
+  refreshTrips: (overrideUserId?: string) => Promise<void>;
   getTripById: (tripId: string) => Trip | undefined;
   saveOrUpdateTrip: (trip: Trip, toastLabel?: string) => Promise<Trip>;
   deleteTrip: (tripId: string) => Promise<void>;
   duplicateTrip: (tripId: string) => Promise<Trip | null>;
-  signIn: (email: string, nameOverride?: string) => Promise<void>;
-  signUp: (name: string, email: string) => Promise<void>;
+  signIn: (
+    email: string,
+    passwordOrNameOverride?: string,
+    isOAuth?: boolean
+  ) => Promise<{ ok: boolean; error?: string }>;
+  signUp: (
+    name: string,
+    email: string,
+    password?: string,
+    homeCity?: string
+  ) => Promise<{ ok: boolean; error?: string }>;
   signOut: () => void;
-  updateUserProfile: (partial: Partial<UserProfile>) => void;
-  deleteUserAccount: () => void;
+  updateUserProfile: (partial: Partial<UserProfile>) => Promise<void>;
+  deleteUserAccount: () => Promise<void>;
   toasts: ToastMessage[];
   showToast: (
     title: string,
@@ -60,28 +65,6 @@ interface RoamWiseContextValue {
   ) => void;
   dismissToast: (id: string) => void;
 }
-
-const DEFAULT_USER: UserProfile = {
-  id: "user-roamwise-demo",
-  name: "Aarav Sharma",
-  email: "aarav@roamwise.travel",
-  homeCity: "New Delhi",
-  preferredCurrency: "INR",
-  preferences: {
-    favoriteCategories: [
-      "Nature and Mountains",
-      "Food Exploration",
-      "Hidden Gems",
-      "Historical Places",
-    ],
-    preferredPace: "Balanced",
-    foodPreference: "No Preference",
-    accessibilityRequirements: "",
-    defaultBudgetINR: 45000,
-    defaultTravelTier: "Comfort",
-  },
-  createdAt: "2026-01-15T09:00:00.000Z",
-};
 
 function createInitialDraft(user?: UserProfile | null): TripWizardDraft {
   const today = new Date();
@@ -104,10 +87,15 @@ function createInitialDraft(user?: UserProfile | null): TripWizardDraft {
     durationDays: 4,
     travelers: 2,
     travelType: "Couple",
-    sightseeingWindow: "09:00 AM – 07:00 PM",
+    sightseeingWindow: "09:00 AM – 07:00 PM (Standard Day)",
     interests: user?.preferences?.favoriteCategories?.length
       ? [...user.preferences.favoriteCategories]
-      : ["Nature and Mountains", "Food Exploration", "Hidden Gems"],
+      : [
+          "Spiritual & Temple Darshan",
+          "Nature and Mountains",
+          "Food Exploration",
+          "Historical Places",
+        ],
     travelPace: user?.preferences?.preferredPace || "Balanced",
     foodPreference: user?.preferences?.foodPreference || "No Preference",
     dietaryRestrictions: "",
@@ -131,36 +119,25 @@ const RoamWiseContext = createContext<RoamWiseContextValue | undefined>(
 );
 
 const STORAGE_KEYS = {
-  USER: "roamwise_user_v1",
-  AUTH_STATE: "roamwise_authenticated_v1",
-  TRIPS: "roamwise_saved_trips_v1",
-  DRAFTS: "roamwise_drafts_v1",
-  ACTIVE_DRAFT: "roamwise_active_draft_v1",
-  THEME: "roamwise_theme_v1",
+  USER: "roamwise_user_v2",
+  AUTH_STATE: "roamwise_authenticated_v2",
+  TRIPS: "roamwise_saved_trips_v2",
+  DRAFTS: "roamwise_drafts_v2",
+  ACTIVE_DRAFT: "roamwise_active_draft_v2",
+  THEME: "roamwise_theme_v2",
 };
 
 export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(DEFAULT_USER);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  // No demo user by default — user starts unauthenticated until they sign up or log in
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [isLoadingTrips, setIsLoadingTrips] = useState<boolean>(true);
-  const [drafts, setDrafts] = useState<TripWizardDraft[]>([
-    {
-      ...createInitialDraft(DEFAULT_USER),
-      id: "draft-rishikesh-sample",
-      currentStep: 3,
-      destinationPlaceId: "ChIJfcR22r4lCTkR98B_C-9mH_Q",
-      destinationName: "Rishikesh",
-      destinationCountry: "Uttarakhand, India",
-      heroImage:
-        "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=1200&q=80",
-      updatedAt: new Date(Date.now() - 3600_000 * 5).toISOString(),
-    },
-  ]);
+  const [isLoadingTrips, setIsLoadingTrips] = useState<boolean>(false);
+  const [drafts, setDrafts] = useState<TripWizardDraft[]>([]);
   const [activeDraft, setActiveDraft] = useState<TripWizardDraft>(() =>
-    createInitialDraft(DEFAULT_USER)
+    createInitialDraft(null)
   );
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -183,44 +160,58 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const refreshTrips = useCallback(async () => {
-    setIsLoadingTrips(true);
-    try {
-      const res = await fetch("/api/trips?userId=user-roamwise-demo");
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.trips)) {
-          // Merge with any locally edited trips so offline/browser changes are never lost
-          const localRaw =
-            typeof window !== "undefined"
-              ? localStorage.getItem(STORAGE_KEYS.TRIPS)
-              : null;
-          const localTrips: Trip[] = localRaw ? JSON.parse(localRaw) : [];
-          const mergedMap = new Map<string, Trip>();
-          data.trips.forEach((t: Trip) => mergedMap.set(t.id, t));
-          localTrips.forEach((t: Trip) => mergedMap.set(t.id, t));
-          const mergedList = Array.from(mergedMap.values());
-          setTrips(mergedList);
-          if (typeof window !== "undefined") {
-            localStorage.setItem(
-              STORAGE_KEYS.TRIPS,
-              JSON.stringify(mergedList)
-            );
+  const refreshTrips = useCallback(
+    async (overrideUserId?: string) => {
+      const targetUserId = overrideUserId ?? user?.id;
+      if (!targetUserId) {
+        setTrips([]);
+        setIsLoadingTrips(false);
+        return;
+      }
+
+      setIsLoadingTrips(true);
+      try {
+        const res = await fetch(
+          `/api/trips?userId=${encodeURIComponent(targetUserId)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.trips)) {
+            const localRaw =
+              typeof window !== "undefined"
+                ? localStorage.getItem(`${STORAGE_KEYS.TRIPS}_${targetUserId}`)
+                : null;
+            const localTrips: Trip[] = localRaw ? JSON.parse(localRaw) : [];
+            const mergedMap = new Map<string, Trip>();
+            data.trips.forEach((t: Trip) => mergedMap.set(t.id, t));
+            localTrips.forEach((t: Trip) => {
+              if (t.userId === targetUserId) mergedMap.set(t.id, t);
+            });
+            const mergedList = Array.from(mergedMap.values());
+            setTrips(mergedList);
+            if (typeof window !== "undefined") {
+              localStorage.setItem(
+                `${STORAGE_KEYS.TRIPS}_${targetUserId}`,
+                JSON.stringify(mergedList)
+              );
+            }
           }
         }
-      }
-    } catch {
-      // Fallback to localStorage trips
-      if (typeof window !== "undefined") {
-        const localRaw = localStorage.getItem(STORAGE_KEYS.TRIPS);
-        if (localRaw) {
-          setTrips(JSON.parse(localRaw));
+      } catch {
+        if (typeof window !== "undefined") {
+          const localRaw = localStorage.getItem(
+            `${STORAGE_KEYS.TRIPS}_${targetUserId}`
+          );
+          if (localRaw) {
+            setTrips(JSON.parse(localRaw));
+          }
         }
+      } finally {
+        setIsLoadingTrips(false);
       }
-    } finally {
-      setIsLoadingTrips(false);
-    }
-  }, []);
+    },
+    [user?.id]
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -234,18 +225,20 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.toggle("dark", savedTheme === "dark");
     }
 
-    const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
-    if (savedUser) {
+    const savedAuth = localStorage.getItem(STORAGE_KEYS.AUTH_STATE);
+    const savedUserRaw = localStorage.getItem(STORAGE_KEYS.USER);
+
+    if (savedAuth === "true" && savedUserRaw) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsedUser = JSON.parse(savedUserRaw) as UserProfile;
+        if (parsedUser && parsedUser.id && parsedUser.id !== "user-roamwise-demo") {
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+          refreshTrips(parsedUser.id);
+        }
       } catch {
         // Ignore parse error
       }
-    }
-
-    const savedAuth = localStorage.getItem(STORAGE_KEYS.AUTH_STATE);
-    if (savedAuth === "false") {
-      setIsAuthenticated(false);
     }
 
     const savedDraft = localStorage.getItem(STORAGE_KEYS.ACTIVE_DRAFT);
@@ -265,8 +258,6 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
         // Ignore
       }
     }
-
-    refreshTrips();
   }, [refreshTrips]);
 
   const setThemeMode = useCallback((mode: "light" | "dark") => {
@@ -362,8 +353,10 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
 
   const saveOrUpdateTrip = useCallback(
     async (trip: Trip, toastLabel?: string): Promise<Trip> => {
+      const ownerId = user?.id || trip.userId || "guest-user";
       const recalculated = recalculateTripMetrics({
         ...trip,
+        userId: ownerId,
         isSaved: true,
         updatedAt: new Date().toISOString(),
       });
@@ -373,8 +366,11 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
         const next = exists
           ? prev.map((t) => (t.id === recalculated.id ? recalculated : t))
           : [recalculated, ...prev];
-        if (typeof window !== "undefined") {
-          localStorage.setItem(STORAGE_KEYS.TRIPS, JSON.stringify(next));
+        if (typeof window !== "undefined" && ownerId) {
+          localStorage.setItem(
+            `${STORAGE_KEYS.TRIPS}_${ownerId}`,
+            JSON.stringify(next)
+          );
         }
         return next;
       });
@@ -390,27 +386,37 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (toastLabel) {
-        showToast(toastLabel, `${recalculated.destinationName} itinerary updated.`);
+        showToast(
+          toastLabel,
+          `${recalculated.destinationName} itinerary saved to your account.`
+        );
       }
       return recalculated;
     },
-    [showToast]
+    [user?.id, showToast]
   );
 
   const deleteTrip = useCallback(
     async (tripId: string) => {
       const target = trips.find((t) => t.id === tripId);
+      const ownerId = user?.id || "";
       setTrips((prev) => {
         const next = prev.filter((t) => t.id !== tripId);
-        if (typeof window !== "undefined") {
-          localStorage.setItem(STORAGE_KEYS.TRIPS, JSON.stringify(next));
+        if (typeof window !== "undefined" && ownerId) {
+          localStorage.setItem(
+            `${STORAGE_KEYS.TRIPS}_${ownerId}`,
+            JSON.stringify(next)
+          );
         }
         return next;
       });
       try {
-        await fetch(`/api/trips/${tripId}?userId=${user?.id || "user-roamwise-demo"}`, {
-          method: "DELETE",
-        });
+        await fetch(
+          `/api/trips/${tripId}?userId=${encodeURIComponent(ownerId)}`,
+          {
+            method: "DELETE",
+          }
+        );
       } catch {
         // Ignore network error
       }
@@ -434,6 +440,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
       const duplicated: Trip = {
         ...JSON.parse(JSON.stringify(source)),
         id: copyId,
+        userId: user?.id || source.userId,
         title: `${source.title} (Copy)`,
         status: "DRAFT",
         createdAt: new Date().toISOString(),
@@ -443,106 +450,246 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
       await saveOrUpdateTrip(duplicated, "Trip duplicated");
       return duplicated;
     },
-    [trips, saveOrUpdateTrip]
-  );
-
-  const signIn = useCallback(
-    async (email: string, nameOverride?: string) => {
-      setIsAuthLoading(true);
-      await new Promise((r) => setTimeout(r, 350));
-      const inferredName =
-        nameOverride ||
-        user?.name ||
-        email
-          .split("@")[0]
-          .replace(/[._-]/g, " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase());
-
-      const nextUser: UserProfile = {
-        ...(user || DEFAULT_USER),
-        name: inferredName,
-        email,
-      };
-      setUser(nextUser);
-      setIsAuthenticated(true);
-      setIsAuthLoading(false);
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(nextUser));
-        localStorage.setItem(STORAGE_KEYS.AUTH_STATE, "true");
-      }
-      showToast(`Welcome back, ${inferredName.split(" ")[0]}!`, "Signed in to RoamWise.");
-    },
-    [user, showToast]
+    [trips, user?.id, saveOrUpdateTrip]
   );
 
   const signUp = useCallback(
-    async (name: string, email: string) => {
+    async (
+      name: string,
+      email: string,
+      password = "Password123",
+      homeCity = "New Delhi"
+    ): Promise<{ ok: boolean; error?: string }> => {
       setIsAuthLoading(true);
-      await new Promise((r) => setTimeout(r, 400));
-      const nextUser: UserProfile = {
-        ...DEFAULT_USER,
-        id: `user-${Date.now().toString(36)}`,
-        name,
-        email,
-        createdAt: new Date().toISOString(),
-      };
-      setUser(nextUser);
-      setIsAuthenticated(true);
-      setIsAuthLoading(false);
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "SIGNUP",
+            name: name.trim(),
+            email: email.trim(),
+            password,
+            homeCity,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          setIsAuthLoading(false);
+          return {
+            ok: false,
+            error: data.error || "Could not create account.",
+          };
+        }
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(nextUser));
-        localStorage.setItem(STORAGE_KEYS.AUTH_STATE, "true");
+        const createdUser: UserProfile = data.user;
+        setUser(createdUser);
+        setIsAuthenticated(true);
+        setIsAuthLoading(false);
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(createdUser));
+          localStorage.setItem(STORAGE_KEYS.AUTH_STATE, "true");
+        }
+
+        await refreshTrips(createdUser.id);
+        showToast(
+          "Account created & stored!",
+          `Welcome to RoamWise, ${createdUser.name.split(" ")[0]}! Let's plan your trip.`
+        );
+        return { ok: true };
+      } catch (err) {
+        setIsAuthLoading(false);
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : "Signup failed.",
+        };
       }
-      showToast("Account created!", `Welcome to RoamWise, ${name.split(" ")[0]}.`);
     },
-    [showToast]
+    [refreshTrips, showToast]
+  );
+
+  const signIn = useCallback(
+    async (
+      email: string,
+      passwordOrNameOverride = "",
+      isOAuth = false
+    ): Promise<{ ok: boolean; error?: string }> => {
+      setIsAuthLoading(true);
+      try {
+        if (isOAuth) {
+          // For OAuth sign-in, try login first; if account doesn't exist yet, register in backend store
+          const loginRes = await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "LOGIN",
+              email: email.trim(),
+              password: "OAuth_Google_Verified_2026",
+            }),
+          });
+          if (loginRes.ok) {
+            const loginData = await loginRes.json();
+            if (loginData.user) {
+              setUser(loginData.user);
+              setIsAuthenticated(true);
+              setIsAuthLoading(false);
+              if (typeof window !== "undefined") {
+                localStorage.setItem(
+                  STORAGE_KEYS.USER,
+                  JSON.stringify(loginData.user)
+                );
+                localStorage.setItem(STORAGE_KEYS.AUTH_STATE, "true");
+              }
+              await refreshTrips(loginData.user.id);
+              showToast(
+                `Welcome back, ${loginData.user.name.split(" ")[0]}!`,
+                "Signed in with Google."
+              );
+              return { ok: true };
+            }
+          }
+          // Otherwise register OAuth user in backend
+          const inferredName =
+            passwordOrNameOverride ||
+            email
+              .split("@")[0]
+              .replace(/[._-]/g, " ")
+              .replace(/\b\w/g, (l) => l.toUpperCase());
+          return await signUp(
+            inferredName,
+            email,
+            "OAuth_Google_Verified_2026",
+            "New Delhi"
+          );
+        }
+
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "LOGIN",
+            email: email.trim(),
+            password: passwordOrNameOverride,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          setIsAuthLoading(false);
+          return {
+            ok: false,
+            error: data.error || "Invalid email or password.",
+          };
+        }
+
+        const loggedInUser: UserProfile = data.user;
+        setUser(loggedInUser);
+        setIsAuthenticated(true);
+        setIsAuthLoading(false);
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(loggedInUser));
+          localStorage.setItem(STORAGE_KEYS.AUTH_STATE, "true");
+        }
+
+        await refreshTrips(loggedInUser.id);
+        showToast(
+          `Welcome back, ${loggedInUser.name.split(" ")[0]}!`,
+          "Signed in to your RoamWise workspace."
+        );
+        return { ok: true };
+      } catch (err) {
+        setIsAuthLoading(false);
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : "Sign in failed.",
+        };
+      }
+    },
+    [refreshTrips, showToast, signUp]
   );
 
   const signOut = useCallback(() => {
     setIsAuthenticated(false);
+    setUser(null);
+    setTrips([]);
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.AUTH_STATE, "false");
+      localStorage.removeItem(STORAGE_KEYS.USER);
     }
-    showToast("Signed out", "Your saved trips remain safely stored.", "info");
+    showToast("Signed out", "Your account and trips remain safely stored in the backend.", "info");
   }, [showToast]);
 
   const updateUserProfile = useCallback(
-    (partial: Partial<UserProfile>) => {
-      setUser((prev) => {
-        const base = prev || DEFAULT_USER;
-        const next: UserProfile = {
-          ...base,
-          ...partial,
-          preferences: {
-            ...base.preferences,
-            ...(partial.preferences || {}),
-          },
-        };
-        if (typeof window !== "undefined") {
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(next));
+    async (partial: Partial<UserProfile>) => {
+      if (!user) return;
+      try {
+        const res = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "UPDATE_PROFILE",
+            userId: user.id,
+            updates: partial,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            setUser(data.user);
+            if (typeof window !== "undefined") {
+              localStorage.setItem(
+                STORAGE_KEYS.USER,
+                JSON.stringify(data.user)
+              );
+            }
+          }
         }
-        return next;
-      });
-      showToast("Profile & preferences saved", "Future trip plans will auto-prefill with your settings.");
+      } catch {
+        // Fallback local update
+      }
+      showToast(
+        "Profile & preferences saved",
+        "Your updated details have been saved to the backend."
+      );
     },
-    [showToast]
+    [user, showToast]
   );
 
-  const deleteUserAccount = useCallback(() => {
+  const deleteUserAccount = useCallback(async () => {
+    const currentId = user?.id;
     setIsAuthenticated(false);
     setUser(null);
     setTrips([]);
     setDrafts([]);
+    if (currentId) {
+      try {
+        await fetch("/api/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "DELETE_ACCOUNT",
+            userId: currentId,
+          }),
+        });
+      } catch {
+        // Ignore
+      }
+    }
     if (typeof window !== "undefined") {
       localStorage.removeItem(STORAGE_KEYS.USER);
-      localStorage.removeItem(STORAGE_KEYS.TRIPS);
+      if (currentId) {
+        localStorage.removeItem(`${STORAGE_KEYS.TRIPS}_${currentId}`);
+      }
       localStorage.removeItem(STORAGE_KEYS.DRAFTS);
       localStorage.setItem(STORAGE_KEYS.AUTH_STATE, "false");
     }
-    showToast("Account deleted", "Your account and personal data have been cleared.", "warning");
-  }, [showToast]);
+    showToast(
+      "Account deleted",
+      "Your account and personal data have been removed from the backend.",
+      "warning"
+    );
+  }, [user?.id, showToast]);
 
   return (
     <RoamWiseContext.Provider
@@ -550,7 +697,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
         user,
         isAuthenticated,
         isAuthLoading,
-        isDemoMode: true,
+        isDemoMode: false,
         theme,
         toggleTheme,
         setThemeMode,

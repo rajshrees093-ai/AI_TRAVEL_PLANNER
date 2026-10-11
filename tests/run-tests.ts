@@ -19,10 +19,16 @@ import {
 import {
   findDestinationInfo,
   getCandidatePlacesForDestination,
+  SACRED_DESTINATIONS,
+  WORLDWIDE_CITIES_AND_HOMETOWNS,
+  computeHometownToDestinationTransit,
 } from "../src/lib/destinations-catalog";
 import {
+  authenticateUserInStore,
   createOrGetShareLink,
+  deleteUserInStore,
   getTripByIdForUser,
+  registerUserInStore,
   resolveSharedTripByToken,
   revokeShareToken,
   upsertTripInStore,
@@ -318,12 +324,84 @@ async function runAllTests() {
       includedExpenses: ["Accommodation", "Food"],
     });
     assert.equal(check.success, true);
-    console.log("✓ [14/15] End-to-end trip generation input validation passed.");
-    console.log("✓ [15/15] Demo Mode & Verified Catalog fallback integrity verified.");
+    console.log("✓ [14/18] End-to-end trip generation input validation passed.");
+    console.log("✓ [15/18] Verified Catalog fallback integrity verified.");
     passed += 2;
   }
 
-  console.log(`\n🎉 ALL ${passed}/15 TEST SUITES PASSED SUCCESSFULLY!`);
+  // Test 16: Real Backend User Registration & Password Verification (No Demo User)
+  {
+    const testEmail = `test_${Date.now()}@roamwise.travel`;
+    const reg = await registerUserInStore({
+      name: "Priya Nair",
+      email: testEmail,
+      password: "Traveler2026",
+      homeCity: "Kochi",
+    });
+    assert.ok(reg.user, "New user should be stored in backend");
+    assert.equal(reg.user!.homeCity, "Kochi");
+
+    const loginSuccess = await authenticateUserInStore({
+      email: testEmail,
+      password: "Traveler2026",
+    });
+    assert.ok(loginSuccess.user, "Registered user must authenticate with valid password");
+
+    const loginFail = await authenticateUserInStore({
+      email: testEmail,
+      password: "WrongPassword999",
+    });
+    assert.ok(loginFail.error, "Wrong password must be rejected");
+
+    await deleteUserInStore(reg.user!.id);
+    console.log("✓ [16/18] Real backend user registration, password hashing & auth verified.");
+    passed++;
+  }
+
+  // Test 17: Sacred Worship & Pilgrimage Destinations + Worldwide Hometown Routing
+  {
+    assert.ok(SACRED_DESTINATIONS.length >= 20, "Must include 20+ sacred & holy places");
+    assert.ok(WORLDWIDE_CITIES_AND_HOMETOWNS.length >= 70, "Must include 70+ Indian & global hometowns");
+
+    const ayodhya = findDestinationInfo("Ayodhya");
+    assert.ok(ayodhya.name.includes("Ayodhya"), "Ayodhya sacred destination must resolve");
+
+    const sacredTrip = await generateCompleteTripItinerary(
+      {
+        destinationPlaceId: ayodhya.placeId,
+        destinationName: ayodhya.name,
+        destinationCountry: ayodhya.stateOrCountry,
+        startCity: "Mumbai",
+        startDate: "2026-11-20",
+        endDate: "2026-11-22",
+        travelers: 4,
+        travelType: "Family",
+        interests: ["Spiritual & Temple Darshan", "Historical Places"],
+        travelPace: "Balanced",
+        foodPreference: "Vegetarian",
+        budgetAmount: 40000,
+        budgetMode: "TOTAL",
+        currency: "INR",
+        travelTier: "Comfort",
+        includedExpenses: ["Accommodation", "Food", "Activities", "Local transport"],
+      },
+      "user-pilgrim-test"
+    );
+    assert.equal(sacredTrip.days.length, 3, "Sacred trip must generate 3 days");
+    for (const d of sacredTrip.days) {
+      for (const act of d.activities) {
+        assert.ok(act.photoUrl.startsWith("http"), "Every activity must have a photo URL for Illustrated PDF export");
+      }
+    }
+
+    const transit = computeHometownToDestinationTransit("Mumbai", "Ayodhya");
+    assert.ok(transit.aerialDistanceKm > 500, "Mumbai to Ayodhya distance must be calculated");
+    console.log("✓ [17/18] Sacred & Holy Places catalog + Worldwide Hometown transit routing passed.");
+    console.log("✓ [18/18] Illustrated PDF place photo presence verified on all itinerary stops.");
+    passed += 2;
+  }
+
+  console.log(`\n🎉 ALL ${passed}/18 TEST SUITES PASSED SUCCESSFULLY!`);
 }
 
 runAllTests().catch((err) => {

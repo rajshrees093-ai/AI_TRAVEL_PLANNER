@@ -1,23 +1,47 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  ArrowRight,
+  Globe2,
+  Sparkles,
+} from "lucide-react";
 import { useRoamWise } from "@/context/RoamWiseContext";
 import { RoamWiseLogo } from "@/components/ui/BrandComponents";
 import { signupSchema } from "@/lib/validations";
+import { WORLDWIDE_CITIES_AND_HOMETOWNS } from "@/lib/destinations-catalog";
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signUp, signIn, isAuthLoading } = useRoamWise();
+  const { signUp, activeDraft, updateActiveDraft, isAuthLoading } =
+    useRoamWise();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [homeCity, setHomeCity] = useState(activeDraft.startCity || "New Delhi");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [redirectPath, setRedirectPath] = useState("/create-trip/destination");
+  const [pendingDest, setPendingDest] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const redir = params.get("redirect");
+      const dest = params.get("dest");
+      if (redir) setRedirectPath(redir);
+      if (dest) setPendingDest(dest);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,17 +54,34 @@ export default function SignupPage() {
       confirmPassword,
     });
     if (!parsed.success) {
-      setErrorMsg(parsed.error.issues[0]?.message || "Please check your inputs.");
+      setErrorMsg(
+        parsed.error.issues[0]?.message || "Please check your inputs."
+      );
       return;
     }
 
-    await signUp(name.trim(), email.trim());
-    router.push("/dashboard");
-  };
+    const res = await signUp(
+      name.trim(),
+      email.trim(),
+      password,
+      homeCity.trim() || "New Delhi"
+    );
 
-  const handleGoogleSignup = async () => {
-    await signIn("aarav@roamwise.travel", "Aarav Sharma");
-    router.push("/dashboard");
+    if (!res.ok) {
+      setErrorMsg(res.error || "Could not create account.");
+      return;
+    }
+
+    if (homeCity.trim()) {
+      updateActiveDraft({ startCity: homeCity.trim() });
+    }
+
+    // If user already picked a destination on the dashboard, go straight to Step 2 (Dates), otherwise Step 1 (Destination)
+    if (activeDraft.destinationPlaceId && redirectPath === "/create-trip/destination") {
+      router.push("/create-trip/dates");
+    } else {
+      router.push(redirectPath || "/create-trip/destination");
+    }
   };
 
   return (
@@ -68,8 +109,9 @@ export default function SignupPage() {
             &ldquo;Every great journey begins with a plan.&rdquo;
           </h1>
           <p className="text-base text-white/85 mt-4 leading-relaxed">
-            Save your favorite itineraries, customize daily timelines, track
-            your travel budget, and share plans effortlessly with companions.
+            Create your personal RoamWise account to unlock step-by-step AI trip
+            planning, customize daily schedules, and download illustrated PDF
+            itineraries with photos of every place you&apos;ll visit.
           </p>
         </div>
       </div>
@@ -81,11 +123,24 @@ export default function SignupPage() {
             <RoamWiseLogo size="md" />
           </div>
 
+          {(pendingDest || activeDraft.destinationName) && (
+            <div className="mb-4 p-3.5 rounded-2xl bg-primary/10 border border-primary/25 flex items-center gap-2.5 text-xs font-medium text-heading">
+              <Sparkles className="w-4 h-4 text-primary shrink-0" />
+              <span>
+                Create your account to continue planning your trip to{" "}
+                <strong className="font-bold text-primary">
+                  {pendingDest || activeDraft.destinationName}
+                </strong>
+                .
+              </span>
+            </div>
+          )}
+
           <h2 className="text-2xl sm:text-3xl font-heading font-bold text-heading">
             Create your RoamWise account
           </h2>
           <p className="text-sm text-muted mt-1.5">
-            Plan smarter trips with verified places and AI personalization.
+            Your profile details and itineraries are stored securely in our backend.
           </p>
 
           {errorMsg && (
@@ -112,7 +167,7 @@ export default function SignupPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Aarav Sharma"
+                  placeholder="Enter your full name"
                   required
                   className="bg-transparent text-sm text-heading focus:outline-none w-full"
                 />
@@ -142,6 +197,35 @@ export default function SignupPage() {
 
             <div>
               <label
+                htmlFor="signup-hometown"
+                className="block text-xs font-semibold text-heading mb-1.5"
+              >
+                Your Hometown / Starting City
+              </label>
+              <div className="flex items-center gap-2.5 bg-background border border-border rounded-xl px-3.5 py-2.5 focus-within:border-primary">
+                <Globe2 className="w-4 h-4 text-muted shrink-0" />
+                <input
+                  id="signup-hometown"
+                  type="text"
+                  list="signup-hometown-options"
+                  value={homeCity}
+                  onChange={(e) => setHomeCity(e.target.value)}
+                  placeholder="e.g. New Delhi, Mumbai, Bengaluru, London..."
+                  required
+                  className="bg-transparent text-sm text-heading focus:outline-none w-full"
+                />
+                <datalist id="signup-hometown-options">
+                  {WORLDWIDE_CITIES_AND_HOMETOWNS.map((c) => (
+                    <option key={c.placeId} value={c.name}>
+                      {c.stateOrCountry}
+                    </option>
+                  ))}
+                </datalist>
+              </div>
+            </div>
+
+            <div>
+              <label
                 htmlFor="signup-password"
                 className="block text-xs font-semibold text-heading mb-1.5"
               >
@@ -154,7 +238,7 @@ export default function SignupPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a strong password"
+                  placeholder="e.g. Travel2026"
                   required
                   className="bg-transparent text-sm text-heading focus:outline-none w-full"
                 />
@@ -200,58 +284,32 @@ export default function SignupPage() {
               className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-60 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors"
             >
               <span>
-                {isAuthLoading ? "Creating account..." : "Create Account"}
+                {isAuthLoading
+                  ? "Saving Account & Opening Planner..."
+                  : "Create Account & Continue to Planner"}
               </span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-surface px-3 text-muted">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleGoogleSignup}
-            className="w-full py-2.5 px-4 rounded-xl border border-border bg-background hover:bg-sand/40 text-heading font-medium text-sm flex items-center justify-center gap-2.5 transition-colors"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"
-              />
-            </svg>
-            <span>Continue with Google</span>
-          </button>
-
           <p className="mt-6 text-center text-xs text-muted">
             Already have an account?{" "}
             <Link
-              href="/login"
+              href={`/login?redirect=${encodeURIComponent(redirectPath)}${pendingDest ? `&dest=${encodeURIComponent(pendingDest)}` : ""}`}
               className="font-semibold text-primary hover:underline"
             >
               Sign In
             </Link>
           </p>
+
+          <div className="mt-4 text-center">
+            <Link
+              href="/dashboard"
+              className="text-xs text-muted hover:text-heading"
+            >
+              ← Back to Dashboard Showcase
+            </Link>
+          </div>
         </div>
       </div>
     </div>

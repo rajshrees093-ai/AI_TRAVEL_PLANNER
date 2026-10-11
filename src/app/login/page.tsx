@@ -1,24 +1,44 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  ArrowRight,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 import { useRoamWise } from "@/context/RoamWiseContext";
 import { RoamWiseLogo } from "@/components/ui/BrandComponents";
 import { loginSchema } from "@/lib/validations";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, isAuthLoading, showToast } = useRoamWise();
+  const { signIn, activeDraft, isAuthLoading, showToast } = useRoamWise();
 
-  const [email, setEmail] = useState("aarav@roamwise.travel");
-  const [password, setPassword] = useState("RoamWise2026");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [forgotMode, setForgotMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [redirectPath, setRedirectPath] = useState("/create-trip/destination");
+  const [pendingDest, setPendingDest] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const redir = params.get("redirect");
+      const dest = params.get("dest");
+      if (redir) setRedirectPath(redir);
+      if (dest) setPendingDest(dest);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,13 +50,23 @@ export default function LoginPage() {
       return;
     }
 
-    await signIn(email);
-    router.push("/dashboard");
-  };
+    const res = await signIn(email.trim(), password, false);
+    if (!res.ok) {
+      setErrorMsg(
+        res.error ||
+          "Account not found or password incorrect. New here? Click 'Create an account' below."
+      );
+      return;
+    }
 
-  const handleGoogleSignIn = async () => {
-    await signIn("aarav@roamwise.travel", "Aarav Sharma");
-    router.push("/dashboard");
+    if (
+      activeDraft.destinationPlaceId &&
+      redirectPath === "/create-trip/destination"
+    ) {
+      router.push("/create-trip/dates");
+    } else {
+      router.push(redirectPath || "/create-trip/destination");
+    }
   };
 
   const handlePasswordReset = (e: React.FormEvent) => {
@@ -77,8 +107,9 @@ export default function LoginPage() {
             &ldquo;Every great journey begins with a plan.&rdquo;
           </h1>
           <p className="text-base text-white/85 mt-4 leading-relaxed">
-            Discover hidden trails, local culinary gems, and stress-free daily
-            routes designed around how you love to explore the world.
+            Discover hidden trails, sacred pilgrimage shrines, local culinary
+            gems, and stress-free daily routes designed around how you love to
+            explore the world.
           </p>
         </div>
       </div>
@@ -92,11 +123,24 @@ export default function LoginPage() {
 
           {!forgotMode ? (
             <>
+              {(pendingDest || activeDraft.destinationName) && (
+                <div className="mb-4 p-3.5 rounded-2xl bg-primary/10 border border-primary/25 flex items-center gap-2.5 text-xs font-medium text-heading">
+                  <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                  <span>
+                    Sign in to continue planning your trip to{" "}
+                    <strong className="font-bold text-primary">
+                      {pendingDest || activeDraft.destinationName}
+                    </strong>
+                    .
+                  </span>
+                </div>
+              )}
+
               <h2 className="text-2xl sm:text-3xl font-heading font-bold text-heading">
                 Welcome back
               </h2>
               <p className="text-sm text-muted mt-1.5">
-                Sign in to access your saved itineraries and travel workspace.
+                Sign in with your registered email and password to access your travel workspace.
               </p>
 
               {errorMsg && (
@@ -144,7 +188,7 @@ export default function LoginPage() {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
+                      placeholder="Enter your password"
                       required
                       className="bg-transparent text-sm text-heading focus:outline-none w-full"
                     />
@@ -192,57 +236,31 @@ export default function LoginPage() {
                   disabled={isAuthLoading}
                   className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-60 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors"
                 >
-                  <span>{isAuthLoading ? "Signing in..." : "Sign In"}</span>
+                  <span>
+                    {isAuthLoading ? "Signing in..." : "Sign In & Continue"}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
 
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="bg-surface px-3 text-muted">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                className="w-full py-2.5 px-4 rounded-xl border border-border bg-background hover:bg-sand/40 text-heading font-medium text-sm flex items-center justify-center gap-2.5 transition-colors"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"
-                  />
-                </svg>
-                <span>Continue with Google</span>
-              </button>
-
               <p className="mt-6 text-center text-xs text-muted">
-                Don&apos;t have an account?{" "}
+                Don&apos;t have an account yet?{" "}
                 <Link
-                  href="/signup"
+                  href={`/signup?redirect=${encodeURIComponent(redirectPath)}${pendingDest ? `&dest=${encodeURIComponent(pendingDest)}` : ""}`}
                   className="font-semibold text-primary hover:underline"
                 >
                   Create an account
                 </Link>
               </p>
+
+              <div className="mt-4 text-center">
+                <Link
+                  href="/dashboard"
+                  className="text-xs text-muted hover:text-heading"
+                >
+                  ← Back to Dashboard Showcase
+                </Link>
+              </div>
             </>
           ) : (
             <div className="space-y-4">

@@ -21,11 +21,118 @@ import {
   Clock,
   Sun,
   Moon,
+  Flame,
+  Globe2,
+  Camera,
+  Search,
+  User,
+  X,
+  ChevronDown,
 } from "lucide-react";
-import { POPULAR_DESTINATIONS } from "@/lib/destinations-catalog";
+import {
+  POPULAR_DESTINATIONS,
+  SACRED_DESTINATIONS,
+  ALL_DESTINATIONS,
+  WORLDWIDE_CITIES_AND_HOMETOWNS,
+  findDestinationInfo,
+  getCandidatePlacesForDestination,
+} from "@/lib/destinations-catalog";
 import { useRoamWise } from "@/context/RoamWiseContext";
 import { RoamWiseLogo } from "@/components/ui/BrandComponents";
 import { calculateDaysBetween, cn } from "@/lib/utils";
+
+const HERO_LANDING_SCENES = [
+  {
+    id: "jaipur",
+    destinationName: "Jaipur",
+    placeLabel: "Hawa Mahal & Amber Fort, Jaipur",
+    promoTag: "ROYAL HERITAGE",
+    headline: "Royal Palaces, Hilltop Forts & Pink City Bazaars",
+    subline:
+      "+ Customized Day-by-Day Fort & Palace Route from your hometown\n+ Includes Chokhi Dhani, Nahargarh Sunset & Illustrated Photo PDF",
+    photoUrl:
+      "https://images.unsplash.com/photo-1477587458883-47145ed94245?auto=format&fit=crop&w=2000&q=85",
+  },
+  {
+    id: "varanasi",
+    destinationName: "Varanasi (Kashi)",
+    placeLabel: "Dashashwamedh Ghat & Kashi Vishwanath, Varanasi",
+    promoTag: "SACRED DARSHAN",
+    headline: "Ancient Ganges Ghats, Evening Aarti & Sacred Temples",
+    subline:
+      "+ Timed Kashi Vishwanath Sugam Darshan & Sunrise Boat Ride\n+ Includes Sarnath Buddhist Trail & Pure Vegetarian Dining",
+    photoUrl:
+      "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=2000&q=85",
+  },
+  {
+    id: "goa",
+    destinationName: "Goa",
+    placeLabel: "Palolem Coastline & Fontainhas Quarter, Goa",
+    promoTag: "COASTAL ESCAPE",
+    headline: "Sun-Drenched Beaches, Latin Villas & Ocean Cruises",
+    subline:
+      "+ Curated North & South Goa Coastline + Aguada Fort Sunset\n+ Includes Heritage Cafés, Water Sports & Route Map",
+    photoUrl:
+      "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=2000&q=85",
+  },
+  {
+    id: "amritsar",
+    destinationName: "Amritsar (Golden Temple)",
+    placeLabel: "Sri Harmandir Sahib Golden Temple, Amritsar",
+    promoTag: "HOLY PILGRIMAGE",
+    headline: "Gleaming Golden Sanctum, Sarovar & Heritage Walk",
+    subline:
+      "+ Dawn & Night Palki Sahib Darshan + Community Langar Experience\n+ Includes Wagah Border Ceremony & Authentic Kulcha Stops",
+    photoUrl:
+      "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=2000&q=85",
+  },
+  {
+    id: "bali",
+    destinationName: "Bali",
+    placeLabel: "Uluwatu Ocean Temple & Ubud Terraces, Bali",
+    promoTag: "ISLAND SANCTUARY",
+    headline: "Emerald Rice Terraces, Cliff Temples & Turquoise Coves",
+    subline:
+      "+ Direct Hometown-to-Bali Flight Guidance + Ubud & Uluwatu Split\n+ Includes Tirta Empul Water Temple & Nusa Penida Viewpoints",
+    photoUrl:
+      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=2000&q=85",
+  },
+];
+
+const LANDING_TALL_POSTERS = [
+  {
+    destinationName: "Dubai",
+    headlineLines: ["FUTURISTIC", "DUBAI & SKYLINE", "ESCAPES"],
+    priceLabel: "₹6,500",
+    sublabel: "EST. DAILY FROM",
+    photoUrl:
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1000&q=85",
+  },
+  {
+    destinationName: "Ayodhya",
+    headlineLines: ["SACRED AYODHYA", "& VARANASI", "DARSHAN 2026"],
+    priceLabel: "₹2,000",
+    sublabel: "EST. DAILY FROM",
+    photoUrl:
+      "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1000&q=85",
+  },
+  {
+    destinationName: "Kerala",
+    headlineLines: ["BACKWATERS", "& MUNNAR HILLS", "KERALA"],
+    priceLabel: "₹3,400",
+    sublabel: "EST. DAILY FROM",
+    photoUrl:
+      "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1000&q=85",
+  },
+  {
+    destinationName: "Tokyo",
+    headlineLines: ["EXPLORE", "TOKYO, KYOTO", "& ASIA"],
+    priceLabel: "₹7,800",
+    sublabel: "EST. DAILY FROM",
+    photoUrl:
+      "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1000&q=85",
+  },
+];
 
 export default function LandingPage() {
   const router = useRouter();
@@ -39,11 +146,22 @@ export default function LandingPage() {
   } = useRoamWise();
 
   const [scrolled, setScrolled] = useState(false);
-  const [quickDest, setQuickDest] = useState("Manali");
+  const [heroSceneIdx, setHeroSceneIdx] = useState(0);
+  const [showSignInPopup, setShowSignInPopup] = useState(true);
+  const [quickStartCity, setQuickStartCity] = useState(
+    activeDraft.startCity || "New Delhi"
+  );
+  const [quickDest, setQuickDest] = useState("");
   const [quickStartDate, setQuickStartDate] = useState(activeDraft.startDate);
   const [quickEndDate, setQuickEndDate] = useState(activeDraft.endDate);
   const [quickBudget, setQuickBudget] = useState(45000);
   const [quickTravelers, setQuickTravelers] = useState(2);
+  const [showcaseFilter, setShowcaseFilter] = useState<
+    "ALL" | "SACRED" | "LEISURE"
+  >("ALL");
+  const [hoveredPhotoByDest, setHoveredPhotoByDest] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 32);
@@ -51,10 +169,19 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroSceneIdx((prev) => (prev + 1) % HERO_LANDING_SCENES.length);
+    }, 6500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentHero = HERO_LANDING_SCENES[heroSceneIdx];
+
   const handleQuickGenerate = (e: React.FormEvent) => {
     e.preventDefault();
-    const matched = POPULAR_DESTINATIONS.find(
-      (d) => d.name.toLowerCase() === quickDest.trim().toLowerCase()
+    const matched = findDestinationInfo(
+      quickDest.trim() || currentHero.destinationName
     );
     const duration = Math.max(
       1,
@@ -62,12 +189,11 @@ export default function LandingPage() {
     );
 
     updateActiveDraft({
-      destinationPlaceId:
-        matched?.placeId ||
-        `ChIJ_custom_${quickDest.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
-      destinationName: matched?.name || quickDest.trim() || "Manali",
-      destinationCountry: matched?.stateOrCountry || "Featured Destination",
-      heroImage: matched?.heroImage || POPULAR_DESTINATIONS[0].heroImage,
+      destinationPlaceId: matched.placeId,
+      destinationName: matched.name,
+      destinationCountry: matched.stateOrCountry,
+      heroImage: matched.heroImage,
+      startCity: quickStartCity.trim() || "New Delhi",
       startDate: quickStartDate,
       endDate: quickEndDate,
       durationDays: duration > 0 ? duration : 4,
@@ -75,6 +201,13 @@ export default function LandingPage() {
       travelers: Number(quickTravelers) || 2,
       currentStep: 3,
     });
+
+    if (!isAuthenticated) {
+      router.push(
+        `/signup?redirect=${encodeURIComponent("/create-trip/preferences")}&dest=${encodeURIComponent(matched.name)}`
+      );
+      return;
+    }
 
     router.push("/create-trip/preferences");
   };
@@ -86,8 +219,34 @@ export default function LandingPage() {
       country: dest.stateOrCountry,
       heroImage: dest.heroImage,
     });
+    if (!isAuthenticated) {
+      router.push(
+        `/signup?redirect=${encodeURIComponent("/create-trip/dates")}&dest=${encodeURIComponent(dest.name)}`
+      );
+      return;
+    }
     router.push("/create-trip/dates");
   };
+
+  const mixedDestinations = (() => {
+    const out: typeof POPULAR_DESTINATIONS = [];
+    const maxLen = Math.max(
+      POPULAR_DESTINATIONS.length,
+      SACRED_DESTINATIONS.length
+    );
+    for (let i = 0; i < maxLen; i++) {
+      if (i < POPULAR_DESTINATIONS.length) out.push(POPULAR_DESTINATIONS[i]);
+      if (i < SACRED_DESTINATIONS.length) out.push(SACRED_DESTINATIONS[i]);
+    }
+    return out.slice(0, 20);
+  })();
+
+  const displayedDestinations =
+    showcaseFilter === "SACRED"
+      ? SACRED_DESTINATIONS
+      : showcaseFilter === "LEISURE"
+      ? POPULAR_DESTINATIONS
+      : mixedDestinations;
 
   return (
     <div className="min-h-screen bg-background text-heading flex flex-col">
@@ -97,7 +256,7 @@ export default function LandingPage() {
           "fixed top-0 inset-x-0 z-50 transition-all duration-300",
           scrolled
             ? "bg-surface/95 backdrop-blur-md border-b border-border py-3.5 shadow-soft"
-            : "bg-black/25 backdrop-blur-xs py-5"
+            : "bg-black/30 backdrop-blur-xs py-5"
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -127,7 +286,7 @@ export default function LandingPage() {
                   : "text-white/85 hover:text-white"
               )}
             >
-              Explore Destinations
+              Destinations & Holy Sites
             </a>
             <a
               href="#how-it-works"
@@ -153,7 +312,7 @@ export default function LandingPage() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 relative">
             <button
               type="button"
               onClick={toggleTheme}
@@ -172,212 +331,419 @@ export default function LandingPage() {
               )}
             </button>
             <Link
-              href={isAuthenticated ? "/dashboard" : "/login"}
+              href="/dashboard"
               className={cn(
-                "px-4 py-2 rounded-xl text-sm font-medium transition-colors",
+                "px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors",
                 scrolled
-                  ? "text-heading hover:bg-sand/50"
+                  ? "text-primary hover:bg-primary/10"
                   : "text-white hover:bg-white/15"
               )}
             >
-              {isAuthenticated ? "Dashboard" : "Login"}
+              Dashboard
             </Link>
+            {!isAuthenticated && (
+              <Link
+                href="/login?redirect=/create-trip/destination"
+                className={cn(
+                  "px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors",
+                  scrolled
+                    ? "text-heading hover:bg-sand/50"
+                    : "text-white hover:bg-white/15"
+                )}
+              >
+                Sign in
+              </Link>
+            )}
             <Link
-              href="/create-trip/destination"
-              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold shadow-sm transition-colors"
+              href={
+                isAuthenticated
+                  ? "/create-trip/destination"
+                  : "/signup?redirect=/create-trip/destination"
+              }
+              className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-sm font-extrabold shadow-sm transition-colors"
             >
-              Get Started
+              {isAuthenticated ? "Plan New Trip" : "Get Started"}
             </Link>
+
+            {/* Floating "Have an account?" Popover Card under Sign in (Like Reference Image 1) */}
+            {!isAuthenticated && showSignInPopup && (
+              <div className="hidden sm:block absolute top-14 right-0 w-72 bg-white text-slate-900 rounded-2xl shadow-2xl p-4 pr-8 border border-slate-100 z-50">
+                <div className="absolute -top-2 right-24 w-4 h-4 bg-white rotate-45 border-l border-t border-slate-100" />
+                <button
+                  type="button"
+                  onClick={() => setShowSignInPopup(false)}
+                  aria-label="Close sign in prompt"
+                  className="absolute top-2.5 right-2.5 p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-slate-700">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-extrabold text-slate-900">
+                      Have an account?
+                    </p>
+                    <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                      Sign in for personalized itineraries, saved trips & Photo
+                      PDF downloads.
+                    </p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <Link
+                        href="/login?redirect=/dashboard"
+                        className="text-xs font-bold text-primary hover:underline"
+                      >
+                        Sign in →
+                      </Link>
+                      <Link
+                        href="/signup?redirect=/dashboard"
+                        className="text-xs font-bold text-accent hover:underline"
+                      >
+                        Sign up
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section with Real Place Photography + Docked White Search & Calendar Bar (Matching Reference Image 1) */}
       <section
         id="top"
-        className="relative min-h-[88vh] flex items-center justify-center pt-28 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
+        className="relative min-h-[86vh] flex flex-col justify-between pt-28 pb-10 px-4 sm:px-6 lg:px-8 overflow-hidden"
       >
         <div
-          className="absolute inset-0 bg-cover bg-center scale-105 transition-transform duration-1000"
+          key={currentHero.id}
+          className="absolute inset-0 bg-cover bg-center transition-all duration-700"
           style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2000&q=85')",
+            backgroundImage: `url('${currentHero.photoUrl}')`,
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/45 to-black/75" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/15" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
 
-        <div className="relative z-10 max-w-6xl mx-auto w-full text-center">
+        {/* Real Place Switcher Pills */}
+        <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-wrap items-center gap-2">
+          <span className="px-3.5 py-1.5 rounded-full bg-black/55 backdrop-blur-md border border-white/25 text-white text-xs font-bold flex items-center gap-1.5">
+            <Camera className="w-3.5 h-3.5 text-amber-400" />
+            <span>{currentHero.placeLabel}</span>
+          </span>
+          {HERO_LANDING_SCENES.map((scene, idx) => (
+            <button
+              key={scene.id}
+              type="button"
+              onClick={() => setHeroSceneIdx(idx)}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-bold transition-all backdrop-blur-md",
+                idx === heroSceneIdx
+                  ? "bg-amber-400 text-slate-950 shadow-sm"
+                  : "bg-black/45 text-white/90 hover:bg-black/65 border border-white/20"
+              )}
+            >
+              {scene.destinationName.split("(")[0].trim()}
+            </button>
+          ))}
+        </div>
+
+        {/* Left-Aligned Hero Headline & Golden Pill Button */}
+        <div className="relative z-10 max-w-7xl mx-auto w-full my-auto py-8">
           <motion.div
-            initial={{ opacity: 0, y: 18 }}
+            key={currentHero.id}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.45 }}
+            className="max-w-2xl text-white"
           >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-white text-xs sm:text-sm font-medium mb-6">
-              <Compass className="w-4 h-4 text-accent" />
-              <span>Explore More. Plan Less. Travel Smarter.</span>
+            <span className="inline-block px-3.5 py-1 rounded-md bg-gradient-to-r from-pink-500 via-orange-500 to-amber-400 text-white text-xs font-black uppercase tracking-widest shadow-md">
+              {currentHero.promoTag} • AI TRAVEL PLANNER
             </span>
 
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-heading font-extrabold text-white tracking-tight max-w-4xl mx-auto leading-[1.08]">
-              Your Next Adventure,{" "}
-              <span className="font-serif italic font-normal text-sand">
-                Perfectly Planned.
-              </span>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-heading font-extrabold text-white tracking-tight leading-[1.08] mt-3 drop-shadow-sm">
+              {currentHero.headline}
             </h1>
 
-            <p className="mt-6 text-base sm:text-lg lg:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed font-normal">
-              Tell us where you want to go, what you love, and how much you&apos;d
-              like to spend. Let AI create a personalized journey made just for
-              you.
+            <p className="mt-4 text-xs sm:text-base text-white/95 font-medium whitespace-pre-line leading-relaxed">
+              {currentHero.subline}
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <div className="mt-6 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={() =>
+                  handleSelectDestinationCard(
+                    findDestinationInfo(currentHero.destinationName)
+                  )
+                }
+                className="px-8 py-3.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-heading font-extrabold text-sm shadow-xl transition-transform hover:scale-105"
+              >
+                Plan {currentHero.destinationName.split("(")[0].trim()} Now
+              </button>
               <Link
-                href="/create-trip/destination"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-semibold text-base shadow-elevated transition-all"
+                href="/dashboard"
+                className="px-6 py-3.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/30 text-white font-heading font-bold text-sm transition-colors"
               >
-                <span>Plan My Trip</span>
-                <ArrowRight className="w-4 h-4" />
+                Open Full Dashboard
               </Link>
-              <a
-                href="#destinations"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/30 font-semibold text-base transition-all"
-              >
-                <span>Explore Destinations</span>
-              </a>
             </div>
           </motion.div>
+        </div>
 
-          {/* Quick Trip Search Widget */}
-          <motion.form
+        {/* Docked White Horizontal Search + Calendar Bar at Bottom of Hero (Immediately Visible Like Reference Image 1) */}
+        <div className="relative z-20 max-w-7xl mx-auto w-full">
+          <form
             onSubmit={handleQuickGenerate}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.15 }}
-            className="mt-12 bg-surface/95 backdrop-blur-md border border-border rounded-2xl p-4 sm:p-5 shadow-elevated max-w-5xl mx-auto text-left"
+            className="bg-white dark:bg-surface text-slate-900 dark:text-heading rounded-2xl shadow-2xl border border-slate-200/80 dark:border-border p-4 sm:p-6"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 items-end">
-              {/* Destination */}
-              <div className="lg:col-span-1">
-                <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
-                  Destination
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+              {/* Traveling to */}
+              <div className="lg:col-span-3">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-muted mb-1">
+                  Traveling to
                 </label>
-                <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-3 py-2.5 focus-within:border-primary">
-                  <MapPin className="w-4 h-4 text-primary shrink-0" />
+                <div className="relative flex items-center border-b-2 border-slate-200 dark:border-border focus-within:border-primary pb-2">
+                  <MapPin className="w-4 h-4 text-primary mr-2 shrink-0" />
                   <input
                     type="text"
                     list="roamwise-hero-destinations"
                     value={quickDest}
                     onChange={(e) => setQuickDest(e.target.value)}
-                    placeholder="Where to?"
-                    required
-                    className="bg-transparent text-sm font-medium text-heading focus:outline-none w-full"
+                    placeholder="Anywhere (City or Holy Site)"
+                    className="bg-transparent text-sm font-bold text-primary dark:text-heading placeholder:text-primary/80 focus:outline-none w-full"
                   />
+                  <ChevronDown className="w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
                   <datalist id="roamwise-hero-destinations">
-                    {POPULAR_DESTINATIONS.map((d) => (
+                    {ALL_DESTINATIONS.map((d) => (
                       <option key={d.placeId} value={d.name}>
-                        {d.stateOrCountry}
+                        {d.stateOrCountry} • {d.category}
+                      </option>
+                    ))}
+                    {WORLDWIDE_CITIES_AND_HOMETOWNS.map((c) => (
+                      <option key={`city_${c.placeId}`} value={c.name}>
+                        {c.stateOrCountry}
                       </option>
                     ))}
                   </datalist>
                 </div>
               </div>
 
-              {/* Start & End Dates */}
-              <div className="lg:col-span-1">
-                <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
-                  Start Date
+              {/* Leaving from (Hometown) */}
+              <div className="lg:col-span-2">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-muted mb-1">
+                  Leaving from
                 </label>
-                <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-3 py-2.5 focus-within:border-primary">
-                  <Calendar className="w-4 h-4 text-primary shrink-0" />
+                <div className="relative flex items-center border-b-2 border-slate-200 dark:border-border focus-within:border-primary pb-2">
+                  <Globe2 className="w-4 h-4 text-primary mr-2 shrink-0" />
+                  <input
+                    type="text"
+                    list="roamwise-hero-hometowns"
+                    value={quickStartCity}
+                    onChange={(e) => setQuickStartCity(e.target.value)}
+                    placeholder="Any hometown"
+                    required
+                    className="bg-transparent text-sm font-bold text-primary dark:text-heading focus:outline-none w-full"
+                  />
+                  <ChevronDown className="w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
+                  <datalist id="roamwise-hero-hometowns">
+                    {WORLDWIDE_CITIES_AND_HOMETOWNS.map((c) => (
+                      <option key={c.placeId} value={c.name}>
+                        {c.stateOrCountry}
+                      </option>
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+
+              {/* Leaving on (Start Date Calendar) */}
+              <div className="lg:col-span-2">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-muted mb-1">
+                  Leaving on (Start Date)
+                </label>
+                <div className="relative flex items-center border-b-2 border-slate-200 dark:border-border focus-within:border-primary pb-2">
+                  <Calendar className="w-4 h-4 text-primary mr-2 shrink-0" />
                   <input
                     type="date"
                     value={quickStartDate}
                     onChange={(e) => setQuickStartDate(e.target.value)}
                     required
-                    className="bg-transparent text-sm font-medium text-heading focus:outline-none w-full"
+                    className="bg-transparent text-sm font-bold text-primary dark:text-heading focus:outline-none w-full cursor-pointer"
                   />
                 </div>
               </div>
 
-              <div className="lg:col-span-1">
-                <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
-                  End Date
+              {/* Returning on (End Date Calendar) */}
+              <div className="lg:col-span-2">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-muted mb-1">
+                  Returning on (End Date)
                 </label>
-                <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-3 py-2.5 focus-within:border-primary">
-                  <Calendar className="w-4 h-4 text-primary shrink-0" />
+                <div className="relative flex items-center border-b-2 border-slate-200 dark:border-border focus-within:border-primary pb-2">
+                  <Calendar className="w-4 h-4 text-primary mr-2 shrink-0" />
                   <input
                     type="date"
                     value={quickEndDate}
                     min={quickStartDate}
                     onChange={(e) => setQuickEndDate(e.target.value)}
                     required
-                    className="bg-transparent text-sm font-medium text-heading focus:outline-none w-full"
+                    className="bg-transparent text-sm font-bold text-primary dark:text-heading focus:outline-none w-full cursor-pointer"
                   />
                 </div>
               </div>
 
-              {/* Budget & Travelers */}
-              <div className="grid grid-cols-2 gap-2 lg:col-span-1">
-                <div>
-                  <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
-                    Budget (₹)
-                  </label>
-                  <div className="flex items-center gap-1.5 bg-background border border-border rounded-xl px-2.5 py-2.5 focus-within:border-primary">
-                    <Wallet className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <input
-                      type="number"
-                      min={5000}
-                      step={2500}
-                      value={quickBudget}
-                      onChange={(e) => setQuickBudget(Number(e.target.value))}
-                      className="bg-transparent text-sm font-medium text-heading focus:outline-none w-full"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
-                    Travelers
-                  </label>
-                  <div className="flex items-center gap-1.5 bg-background border border-border rounded-xl px-2.5 py-2.5 focus-within:border-primary">
-                    <Users className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={quickTravelers}
-                      onChange={(e) =>
-                        setQuickTravelers(Number(e.target.value))
-                      }
-                      className="bg-transparent text-sm font-medium text-heading focus:outline-none w-full"
-                    />
-                  </div>
+              {/* Guests */}
+              <div className="lg:col-span-1">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-muted mb-1">
+                  Guests
+                </label>
+                <div className="relative flex items-center border-b-2 border-slate-200 dark:border-border focus-within:border-primary pb-2">
+                  <Users className="w-4 h-4 text-primary mr-1.5 shrink-0" />
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={quickTravelers}
+                    onChange={(e) => setQuickTravelers(Number(e.target.value))}
+                    className="bg-transparent text-sm font-bold text-primary dark:text-heading focus:outline-none w-full"
+                  />
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <div className="lg:col-span-1">
+              {/* Search Trips Button */}
+              <div className="lg:col-span-2">
                 <button
                   type="submit"
-                  className="w-full h-[44px] rounded-xl bg-accent hover:bg-accent-hover text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors"
+                  className="w-full h-[46px] rounded-full bg-[#0057D9] hover:bg-[#0046B0] text-white font-heading font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Generate Trip</span>
+                  <Search className="w-4 h-4" />
+                  <span>Search Trips</span>
                 </button>
               </div>
             </div>
-          </motion.form>
+          </form>
         </div>
       </section>
 
-      {/* Popular Destinations Section */}
+      {/* 4 Tall Vertical Poster Cards + Wide Gradient-Framed Panoramic Banner (Matching Reference Image 2) */}
+      <section className="pt-16 pb-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {LANDING_TALL_POSTERS.map((card) => (
+            <div
+              key={card.destinationName}
+              onClick={() =>
+                handleSelectDestinationCard(
+                  findDestinationInfo(card.destinationName)
+                )
+              }
+              className="group relative h-[430px] rounded-2xl overflow-hidden shadow-elevated cursor-pointer select-none"
+            >
+              <img
+                src={card.photoUrl}
+                alt={card.destinationName}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+
+              <div className="absolute inset-x-6 bottom-6 text-white flex flex-col items-start">
+                <div className="space-y-0.5">
+                  {card.headlineLines.map((line) => (
+                    <p
+                      key={line}
+                      className="text-2xl sm:text-[26px] font-heading font-black uppercase leading-[1.05] tracking-tight drop-shadow-sm"
+                    >
+                      {line}
+                    </p>
+                  ))}
+                </div>
+
+                <div className="mt-3">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-white/85">
+                    {card.sublabel}
+                  </p>
+                  <p className="text-3xl font-heading font-black text-white leading-tight">
+                    {card.priceLabel}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="mt-4 px-6 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-heading font-extrabold text-xs shadow-md transition-transform group-hover:scale-105"
+                >
+                  Plan now
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Wide Gradient-Framed Panoramic Banner */}
+        <div
+          onClick={() =>
+            handleSelectDestinationCard(
+              findDestinationInfo("Kedarnath & Badrinath (Char Dham)")
+            )
+          }
+          className="p-1.5 rounded-3xl bg-gradient-to-r from-pink-500 via-orange-400 to-amber-300 shadow-elevated cursor-pointer group"
+        >
+          <div className="relative h-[220px] sm:h-[240px] rounded-[20px] overflow-hidden flex items-center justify-between px-6 sm:px-12">
+            <img
+              src="https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=2000&q=85"
+              alt="Char Dham & Global Escapes"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/75" />
+
+            <div className="relative z-10 hidden md:flex items-center gap-4 text-white">
+              <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center">
+                <Compass className="w-9 h-9 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-amber-300">
+                  ROAMWISE SIGNATURE EXPEDITIONS
+                </p>
+                <p className="text-lg font-heading font-extrabold">
+                  Hometown-to-Destination Multi-Modal Routes
+                </p>
+                <p className="text-xs text-white/80">
+                  Flights • Express Trains • Highway Transfers • Photo PDF
+                </p>
+              </div>
+            </div>
+
+            <div className="relative z-10 my-auto">
+              <button
+                type="button"
+                className="px-7 py-3.5 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-heading font-extrabold text-xs sm:text-sm shadow-xl transition-transform group-hover:scale-105"
+              >
+                Explore Now
+              </button>
+            </div>
+
+            <div className="relative z-10 text-right text-white max-w-md">
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-white/90">
+                BACK FOR BOLD & DIVINE ESCAPES
+              </p>
+              <h4 className="text-2xl sm:text-4xl font-heading font-black uppercase tracking-tight leading-none mt-1">
+                CHAR DHAM & GLOBAL WONDERS
+              </h4>
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-amber-300 mt-1.5">
+                INDIA & WORLDWIDE • 2026–2027 SEASON OPEN
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Popular & Sacred Destinations Section */}
       <section
         id="destinations"
         className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
       >
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              Curated Inspiration
+              Curated Inspiration & Sacred Pilgrimages
             </span>
             <h2 className="text-3xl sm:text-4xl font-heading font-bold text-heading mt-2">
               Where will your next story begin?
@@ -387,56 +753,130 @@ export default function LandingPage() {
             href="/create-trip/destination"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-dark transition-colors"
           >
-            <span>Search any global destination</span>
+            <span>Search any global city or holy place</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
+        {/* Category Filter Tabs */}
+        <div className="flex flex-wrap items-center gap-2.5 mb-8">
+          {[
+            { id: "ALL" as const, label: "All Featured Destinations & Holy Sites", icon: Compass },
+            { id: "SACRED" as const, label: "Sacred Worship & Pilgrimage Places (21+)", icon: Flame },
+            { id: "LEISURE" as const, label: "Mountains, Beaches & Global Cities", icon: Sparkles },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const active = showcaseFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setShowcaseFilter(tab.id)}
+                className={cn(
+                  "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all",
+                  active
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-surface border border-border text-muted hover:text-heading hover:bg-sand/40"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {POPULAR_DESTINATIONS.map((dest) => (
-            <button
-              key={dest.placeId}
-              type="button"
-              onClick={() => handleSelectDestinationCard(dest)}
-              className="group text-left bg-surface border border-border rounded-2xl overflow-hidden shadow-soft hover:shadow-elevated transition-all duration-300 flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <div className="relative h-60 w-full overflow-hidden">
-                <img
-                  src={dest.heroImage}
-                  alt={dest.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
-                <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full text-xs font-medium bg-surface/90 backdrop-blur-xs text-heading">
-                  {dest.category}
-                </span>
-                <div className="absolute bottom-3.5 inset-x-4 flex items-end justify-between text-white">
-                  <div>
-                    <h3 className="text-xl font-heading font-bold leading-tight">
-                      {dest.name}
-                    </h3>
-                    <p className="text-xs text-white/85 mt-0.5">
-                      {dest.stateOrCountry}
-                    </p>
+          {displayedDestinations.map((dest) => {
+            const stops = getCandidatePlacesForDestination(dest.name).slice(
+              0,
+              3
+            );
+            const activePhoto =
+              hoveredPhotoByDest[dest.placeId] || dest.heroImage;
+            return (
+              <div
+                key={dest.placeId}
+                onClick={() => handleSelectDestinationCard(dest)}
+                className="group cursor-pointer text-left bg-surface border border-border rounded-2xl overflow-hidden shadow-soft hover:shadow-elevated transition-all duration-300 flex flex-col"
+              >
+                <div className="relative h-56 w-full overflow-hidden">
+                  <img
+                    src={activePhoto}
+                    alt={dest.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+                  <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full text-xs font-medium bg-surface/90 backdrop-blur-xs text-heading">
+                    {dest.category}
+                  </span>
+                  <div className="absolute bottom-3.5 inset-x-4 flex items-end justify-between text-white">
+                    <div>
+                      <h3 className="text-xl font-heading font-bold leading-tight">
+                        {dest.name}
+                      </h3>
+                      <p className="text-xs text-white/85 mt-0.5">
+                        {dest.stateOrCountry}
+                      </p>
+                    </div>
+                    <span className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center group-hover:bg-primary transition-colors">
+                      <ArrowUpRight className="w-4 h-4 text-white" />
+                    </span>
                   </div>
-                  <span className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center group-hover:bg-primary transition-colors">
-                    <ArrowUpRight className="w-4 h-4 text-white" />
-                  </span>
+                </div>
+
+                {/* 3-Photo Landmark Preview Strip */}
+                {stops.length > 0 && (
+                  <div className="px-3.5 pt-3 pb-1">
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {stops.map((s) => (
+                        <div
+                          key={s.placeId}
+                          onMouseEnter={() =>
+                            setHoveredPhotoByDest((prev) => ({
+                              ...prev,
+                              [dest.placeId]: s.photoUrl,
+                            }))
+                          }
+                          onMouseLeave={() =>
+                            setHoveredPhotoByDest((prev) => {
+                              const next = { ...prev };
+                              delete next[dest.placeId];
+                              return next;
+                            })
+                          }
+                          className="relative h-12 rounded-lg overflow-hidden border border-border hover:border-primary transition-all"
+                          title={s.name}
+                        >
+                          <img
+                            src={s.photoUrl}
+                            alt={s.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+                          <span className="absolute bottom-0.5 inset-x-1 text-[8px] font-semibold text-white truncate">
+                            {s.name.split("—")[0].trim()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="p-4 pt-2.5 flex-1 flex flex-col justify-between">
+                  <p className="text-xs text-muted line-clamp-2 leading-relaxed">
+                    {dest.tagline}
+                  </p>
+                  <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-muted">
+                    <span>Best time: {dest.bestMonths}</span>
+                    <span className="font-semibold text-primary group-hover:underline">
+                      Plan Trip →
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="p-4 flex-1 flex flex-col justify-between">
-                <p className="text-xs text-muted line-clamp-2 leading-relaxed">
-                  {dest.tagline}
-                </p>
-                <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-muted">
-                  <span>Best time: {dest.bestMonths}</span>
-                  <span className="font-semibold text-primary group-hover:underline">
-                    Plan Trip →
-                  </span>
-                </div>
-              </div>
-            </button>
-          ))}
+            );
+          })}
         </div>
       </section>
 
