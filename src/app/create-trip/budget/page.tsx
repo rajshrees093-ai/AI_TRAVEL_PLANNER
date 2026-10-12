@@ -352,7 +352,7 @@ export default function BudgetSelectionPage() {
                         recommendedMinTotal,
                         activeDraft.currency
                       )}
-                      . You can still continue—RoamWise will prioritize free
+                      . You can still continue—RouteBloom will prioritize free
                       natural attractions and budget-friendly cafés.
                     </p>
                   </div>

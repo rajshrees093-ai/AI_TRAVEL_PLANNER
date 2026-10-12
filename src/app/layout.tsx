@@ -26,9 +26,12 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "RoamWise — Explore More. Plan Less. Travel Smarter.",
+  title: "RouteBloom — Explore More. Plan Less. Travel Smarter.",
   description:
-    "RoamWise is an intelligent AI travel planning platform that builds personalized day-by-day itineraries with verified places, interactive route maps, and smart budget planning.",
+    "RouteBloom is an intelligent AI travel planning platform that builds personalized day-by-day itineraries with verified places, interactive route maps, and smart budget planning.",
+  icons: {
+    icon: "/routebloom-mark.svg",
+  },
 };
 
 export default function RootLayout({

@@ -118,7 +118,7 @@ export default function SignupPage() {
           className="auth-back"
           onClick={() => router.push("/")}
         >
-          <ArrowLeft size={16} /> Back to RoamWise
+          <ArrowLeft size={16} /> Back to RouteBloom
         </button>
         <div className="auth-photo-caption">
           <Brand light />

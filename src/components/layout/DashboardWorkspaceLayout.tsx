@@ -64,7 +64,7 @@ export function DashboardWorkspaceLayout({
             <em>great trip.</em>
           </h1>
           <p>
-            Sign in with your RoamWise account, or create a free account to
+            Sign in with your RouteBloom account, or create a free account to
             plan, customize, and save your itineraries.
           </p>
           <button
@@ -75,7 +75,7 @@ export function DashboardWorkspaceLayout({
               )
             }
           >
-            Sign in to RoamWise <ArrowRight size={17} />
+            Sign in to RouteBloom <ArrowRight size={17} />
           </button>
           <button
             className="button button-quiet button-wide"
@@ -273,7 +273,7 @@ export function DashboardWorkspaceLayout({
             </button>
             <div>
               <div className="eyebrow">
-                ROAMWISE <span>·</span> {(title || currentTitle).toUpperCase()}
+                ROUTEBLOOM <span>·</span> {(title || currentTitle).toUpperCase()}
               </div>
               <div className="breadcrumb">
                 {breadcrumbs && breadcrumbs.length > 0 ? (

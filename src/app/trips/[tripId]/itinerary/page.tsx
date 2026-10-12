@@ -13,7 +13,6 @@ import {
   ArrowDown,
   ExternalLink,
   Repeat,
-  Calendar,
   Car,
   Sparkles,
   X,
@@ -24,7 +23,7 @@ import { useRoamWise } from "@/context/RoamWiseContext";
 import { getCandidatePlacesForDestination } from "@/lib/destinations-catalog";
 import { regenerateSingleDayInTrip } from "@/lib/ai-assistant";
 import { TripActivity, VerifiedPlace } from "@/lib/types";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 export default function DayWiseItineraryPage({
   params,
@@ -90,7 +89,6 @@ export default function DayWiseItineraryPage({
     if (targetIdx < 0 || targetIdx >= currentDay.activities.length) return;
 
     const list = [...currentDay.activities];
-    // Swap positions while keeping time slots sensible
     const temp = list[activityIndex];
     list[activityIndex] = {
       ...list[targetIdx],
@@ -249,184 +247,139 @@ export default function DayWiseItineraryPage({
     >
       <TripHeaderShell tripId={params.tripId}>
         {trip && currentDay && (
-          <div className="space-y-6">
+          <div className="trip-detail-panel">
             {/* Day Selector Tabs */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-surface border border-border rounded-2xl p-4 shadow-soft">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+            <div className="panel-heading">
+              <div className="day-selector">
                 {trip.days.map((day) => {
                   const active = day.dayNumber === currentDay.dayNumber;
                   return (
                     <button
                       key={day.id}
                       type="button"
+                      className={`day-pill ${active ? "active" : ""}`}
                       onClick={() => setSelectedDayNum(day.dayNumber)}
-                      className={cn(
-                        "px-4 py-2.5 rounded-xl text-xs sm:text-sm font-heading font-bold transition-all shrink-0",
-                        active
-                          ? "bg-primary text-white shadow-xs"
-                          : "bg-background border border-border text-muted hover:text-heading"
-                      )}
                     >
                       <span>Day {day.dayNumber}</span>
-                      <span
-                        className={cn(
-                          "ml-2 text-[11px] font-normal",
-                          active ? "text-white/85" : "text-muted"
-                        )}
-                      >
-                        {day.date}
-                      </span>
+                      <small>{day.date}</small>
                     </button>
                   );
                 })}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="day-actions">
                 <button
                   type="button"
+                  className="button button-primary button-sm"
                   onClick={() => setAddingModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Attraction</span>
+                  <Plus className="w-3.5 h-3.5" /> Add Attraction
                 </button>
                 <button
                   type="button"
+                  className="button button-quiet button-sm"
                   disabled={isRegeneratingDay}
                   onClick={handleRegenerateCurrentDay}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border bg-background hover:bg-sand/40 text-xs font-semibold text-heading transition-colors"
                 >
-                  <RefreshCw
-                    className={cn(
-                      "w-3.5 h-3.5 text-primary",
-                      isRegeneratingDay && "animate-spin"
-                    )}
-                  />
-                  <span>Regenerate Day {currentDay.dayNumber}</span>
+                  <RefreshCw className="w-3.5 h-3.5" /> Regenerate Day{" "}
+                  {currentDay.dayNumber}
                 </button>
               </div>
             </div>
 
             {/* Day Banner Summary */}
-            <div className="bg-surface border border-border rounded-2xl p-5 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="day-title-row">
               <div>
-                <div className="flex items-center gap-2 text-xs text-primary font-bold uppercase tracking-wider">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>{currentDay.date}</span>
-                </div>
-                <h3 className="text-xl font-heading font-bold text-heading mt-1">
-                  {currentDay.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-muted mt-1">
-                  {currentDay.summary}
-                </p>
+                <span className="eyebrow">{currentDay.date}</span>
+                <h2>{currentDay.title}</h2>
+                <p>{currentDay.summary}</p>
               </div>
               <Link
                 href={`/trips/${trip.id}/map?day=${currentDay.dayNumber}`}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sand/60 hover:bg-sand text-heading text-xs font-semibold shrink-0 transition-colors"
+                className="button button-quiet button-sm"
               >
-                <MapPin className="w-4 h-4 text-primary" />
-                <span>View Day {currentDay.dayNumber} Route on Map</span>
+                <MapPin className="w-4 h-4" /> View Day {currentDay.dayNumber}{" "}
+                Route on Map
               </Link>
             </div>
 
             {/* Timeline Cards */}
             {currentDay.activities.length === 0 ? (
-              <div className="bg-surface border border-border rounded-2xl p-10 text-center">
-                <p className="text-base font-heading font-bold text-heading">
-                  No activities scheduled for Day {currentDay.dayNumber}
-                </p>
-                <p className="text-xs text-muted mt-1">
+              <div className="empty-panel">
+                <h3>No activities scheduled for Day {currentDay.dayNumber}</h3>
+                <p>
                   Add a verified attraction or regenerate this day to populate
                   your schedule.
                 </p>
                 <button
                   type="button"
+                  className="button button-primary"
                   onClick={() => setAddingModalOpen(true)}
-                  className="mt-4 px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold"
                 >
                   + Add Verified Attraction
                 </button>
               </div>
             ) : (
-              <div className="relative pl-6 sm:pl-8 border-l-2 border-primary/30 space-y-6 ml-2 sm:ml-4">
+              <div className="timeline">
                 {currentDay.activities.map((act, idx) => (
-                  <div key={act.id} className="relative">
-                    {/* Numbered Timeline Dot */}
-                    <div className="absolute -left-[37px] sm:-left-[45px] top-4 w-7 h-7 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center shadow-sm">
-                      {idx + 1}
+                  <div key={act.id} className="timeline-item">
+                    <div className="timeline-node">
+                      <span>{idx + 1}</span>
                     </div>
 
-                    <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-soft hover:border-primary/40 transition-all">
-                      <div className="flex flex-col md:flex-row gap-4">
-                        <img
-                          src={act.photoUrl}
-                          alt={act.title}
-                          className="w-full md:w-44 h-36 rounded-xl object-cover shrink-0"
-                        />
+                    <div className="timeline-card">
+                      <div className="timeline-time">
+                        <strong>{act.startTime}</strong>
+                        <span>to {act.endTime}</span>
+                        {act.travelTimeToNext &&
+                          idx < currentDay.activities.length - 1 && (
+                            <small style={{ color: "var(--ocean)", fontWeight: 700, marginTop: "6px" }}>
+                              <Car className="w-3.5 h-3.5" /> ~
+                              {act.travelTimeToNext}m ({act.distanceToNextKm} km)
+                            </small>
+                          )}
+                      </div>
 
-                        <div className="flex-1 min-w-0 flex flex-col justify-between">
-                          <div>
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-mono text-xs font-bold">
-                                  {act.startTime} – {act.endTime}
-                                </span>
-                                <span className="px-2.5 py-1 rounded-lg bg-sand text-heading text-xs font-semibold">
+                      <div className="activity-content">
+                        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                          <img
+                            src={act.photoUrl}
+                            alt={act.title}
+                            style={{
+                              width: "148px",
+                              height: "110px",
+                              borderRadius: "16px",
+                              objectFit: "cover",
+                              flexShrink: 0,
+                            }}
+                          />
+
+                          <div style={{ flex: 1, minWidth: "220px" }}>
+                            <div className="activity-top">
+                              <div>
+                                <h3>{act.title}</h3>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                <span className="activity-category">
                                   {act.category}
                                 </span>
                                 {act.isHiddenGem && (
-                                  <span className="px-2.5 py-1 rounded-lg bg-accent/15 text-accent text-xs font-bold flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3" />
-                                    Hidden Gem
+                                  <span className="pill-badge">
+                                    <Sparkles className="w-3 h-3" /> Hidden Gem
                                   </span>
                                 )}
                               </div>
-
-                              {/* Reorder Buttons */}
-                              <div className="flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  disabled={idx === 0}
-                                  onClick={() =>
-                                    handleReorderActivity(idx, "UP")
-                                  }
-                                  aria-label="Move activity earlier"
-                                  className="p-1.5 rounded-lg border border-border text-muted hover:text-heading disabled:opacity-30"
-                                >
-                                  <ArrowUp className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={
-                                    idx === currentDay.activities.length - 1
-                                  }
-                                  onClick={() =>
-                                    handleReorderActivity(idx, "DOWN")
-                                  }
-                                  aria-label="Move activity later"
-                                  className="p-1.5 rounded-lg border border-border text-muted hover:text-heading disabled:opacity-30"
-                                >
-                                  <ArrowDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
                             </div>
 
-                            <h4 className="text-lg font-heading font-bold text-heading mt-2">
-                              {act.title}
-                            </h4>
-                            <p className="text-xs sm:text-sm text-muted mt-1 leading-relaxed">
-                              {act.description}
-                            </p>
+                            <p style={{ marginTop: "6px" }}>{act.description}</p>
 
-                            <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted">
-                              <span className="inline-flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5 text-primary" />
-                                Visit: {act.expectedDuration} mins
+                            <div className="activity-meta" style={{ marginTop: "10px" }}>
+                              <span>
+                                <Clock className="w-3.5 h-3.5" /> Visit:{" "}
+                                {act.expectedDuration} mins
                               </span>
-                              <span className="inline-flex items-center gap-1 font-semibold text-heading">
-                                <Wallet className="w-3.5 h-3.5 text-primary" />
-                                Est. Cost:{" "}
+                              <span>
+                                <Wallet className="w-3.5 h-3.5" /> Est. Cost:{" "}
                                 {act.estimatedCost === 0
                                   ? "Free Entry"
                                   : formatCurrency(
@@ -439,137 +392,130 @@ export default function DayWiseItineraryPage({
                               )}
                             </div>
                           </div>
+                        </div>
 
-                          {/* Inline Time Editor if active */}
-                          {editingTimeActId === act.id && (
-                            <div className="mt-3 p-3 rounded-xl bg-background border border-border flex flex-wrap items-center gap-2">
-                              <input
-                                type="text"
-                                value={editStartTime}
-                                onChange={(e) =>
-                                  setEditStartTime(e.target.value)
-                                }
-                                placeholder="09:00 AM"
-                                className="px-2.5 py-1 rounded-lg bg-surface border border-border text-xs text-heading w-28"
-                              />
-                              <span className="text-xs text-muted">to</span>
-                              <input
-                                type="text"
-                                value={editEndTime}
-                                onChange={(e) => setEditEndTime(e.target.value)}
-                                placeholder="11:00 AM"
-                                className="px-2.5 py-1 rounded-lg bg-surface border border-border text-xs text-heading w-28"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleSaveTimeEdit(act.id)}
-                                className="px-3 py-1 rounded-lg bg-primary text-white text-xs font-semibold"
-                              >
-                                Save Time
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditingTimeActId(null)}
-                                className="px-2.5 py-1 text-xs text-muted"
-                              >
-                                Cancel
-                              </button>
-                            </div>
+                        {editingTimeActId === act.id && (
+                          <div className="replace-drawer" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px" }}>
+                            <input
+                              type="text"
+                              value={editStartTime}
+                              onChange={(e) => setEditStartTime(e.target.value)}
+                              placeholder="09:00 AM"
+                              style={{ padding: "6px 10px", borderRadius: "10px", border: "1px solid var(--line)" }}
+                            />
+                            <span>to</span>
+                            <input
+                              type="text"
+                              value={editEndTime}
+                              onChange={(e) => setEditEndTime(e.target.value)}
+                              placeholder="11:00 AM"
+                              style={{ padding: "6px 10px", borderRadius: "10px", border: "1px solid var(--line)" }}
+                            />
+                            <button
+                              type="button"
+                              className="button button-primary button-sm"
+                              onClick={() => handleSaveTimeEdit(act.id)}
+                            >
+                              Save Time
+                            </button>
+                            <button
+                              type="button"
+                              className="button button-quiet button-sm"
+                              onClick={() => setEditingTimeActId(null)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="activity-actions">
+                          <button
+                            type="button"
+                            className="mini-action"
+                            disabled={idx === 0}
+                            onClick={() => handleReorderActivity(idx, "UP")}
+                            aria-label="Move activity earlier"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" /> Earlier
+                          </button>
+
+                          <button
+                            type="button"
+                            className="mini-action"
+                            disabled={idx === currentDay.activities.length - 1}
+                            onClick={() => handleReorderActivity(idx, "DOWN")}
+                            aria-label="Move activity later"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" /> Later
+                          </button>
+
+                          <button
+                            type="button"
+                            className="mini-action"
+                            onClick={() => setReplacingActivityId(act.id)}
+                          >
+                            <Repeat className="w-3.5 h-3.5" /> Replace
+                          </button>
+
+                          <button
+                            type="button"
+                            className="mini-action"
+                            onClick={() => {
+                              setEditingTimeActId(act.id);
+                              setEditStartTime(act.startTime);
+                              setEditEndTime(act.endTime);
+                            }}
+                          >
+                            <Clock className="w-3.5 h-3.5" /> Change Time
+                          </button>
+
+                          {trip.days.length > 1 && (
+                            <select
+                              aria-label="Move activity to another day"
+                              value={currentDay.dayNumber}
+                              onChange={(e) =>
+                                handleMoveToDay(act, Number(e.target.value))
+                              }
+                              className="mini-action"
+                            >
+                              {trip.days.map((d) => (
+                                <option key={d.id} value={d.dayNumber}>
+                                  {d.dayNumber === currentDay.dayNumber
+                                    ? `On Day ${d.dayNumber}`
+                                    : `Move to Day ${d.dayNumber}`}
+                                </option>
+                              ))}
+                            </select>
                           )}
 
-                          {/* Activity Action Bar */}
-                          <div className="mt-4 pt-3 border-t border-border flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setReplacingActivityId(act.id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-background hover:bg-sand/40 border border-border text-xs font-medium text-heading transition-colors"
-                              >
-                                <Repeat className="w-3.5 h-3.5 text-primary" />
-                                <span>Replace</span>
-                              </button>
+                          <button
+                            type="button"
+                            className="mini-action danger"
+                            onClick={() => handleDeleteActivity(act.id)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Remove
+                          </button>
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingTimeActId(act.id);
-                                  setEditStartTime(act.startTime);
-                                  setEditEndTime(act.endTime);
-                                }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-background hover:bg-sand/40 border border-border text-xs font-medium text-heading transition-colors"
-                              >
-                                <Clock className="w-3.5 h-3.5 text-primary" />
-                                <span>Change Time</span>
-                              </button>
+                          <Link
+                            href={`/trips/${trip.id}/map?day=${currentDay.dayNumber}&highlight=${act.id}`}
+                            className="mini-action"
+                          >
+                            <MapPin className="w-3.5 h-3.5" /> View on Map
+                          </Link>
 
-                              {trip.days.length > 1 && (
-                                <select
-                                  aria-label="Move activity to another day"
-                                  value={currentDay.dayNumber}
-                                  onChange={(e) =>
-                                    handleMoveToDay(act, Number(e.target.value))
-                                  }
-                                  className="px-2.5 py-1.5 rounded-lg bg-background border border-border text-xs font-medium text-heading"
-                                >
-                                  {trip.days.map((d) => (
-                                    <option
-                                      key={d.id}
-                                      value={d.dayNumber}
-                                    >
-                                      {d.dayNumber === currentDay.dayNumber
-                                        ? `On Day ${d.dayNumber}`
-                                        : `Move to Day ${d.dayNumber}`}
-                                    </option>
-                                  ))}
-                                </select>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteActivity(act.id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-background hover:bg-red-50 border border-border text-xs font-medium text-red-600 transition-colors"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Remove</span>
-                              </button>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <Link
-                                href={`/trips/${trip.id}/map?day=${currentDay.dayNumber}&highlight=${act.id}`}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-colors"
-                              >
-                                <MapPin className="w-3.5 h-3.5" />
-                                <span>View on Map</span>
-                              </Link>
-                              <a
-                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                  `${act.title} ${trip.destinationName}`
-                                )}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-border text-xs font-medium text-muted hover:text-heading"
-                              >
-                                <span>Google Maps</span>
-                                <ExternalLink className="w-3 h-3" />
-                              </a>
-                            </div>
-                          </div>
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                              `${act.title} ${trip.destinationName}`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mini-action"
+                          >
+                            Google Maps <ExternalLink className="w-3 h-3" />
+                          </a>
                         </div>
                       </div>
                     </div>
-
-                    {/* Travel Time Connector to Next Activity */}
-                    {act.travelTimeToNext &&
-                      idx < currentDay.activities.length - 1 && (
-                        <div className="my-3 ml-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sand/70 border border-border text-xs font-medium text-heading">
-                          <Car className="w-3.5 h-3.5 text-primary" />
-                          <span>
-                            ~{act.travelTimeToNext} mins drive (
-                            {act.distanceToNextKm} km) to next stop
-                          </span>
-                        </div>
-                      )}
                   </div>
                 ))}
               </div>
@@ -638,7 +584,7 @@ export default function DayWiseItineraryPage({
                               ? handleReplaceWithVerifiedPlace(place)
                               : handleAddVerifiedPlace(place)
                           }
-                          className="px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold shrink-0"
+                          className="button button-primary button-sm"
                         >
                           {replacingActivityId ? "Replace" : "Add Stop"}
                         </button>

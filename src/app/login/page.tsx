@@ -103,7 +103,7 @@ export default function LoginPage() {
           className="auth-back"
           onClick={() => router.push("/")}
         >
-          <ArrowLeft size={16} /> Back to RoamWise
+          <ArrowLeft size={16} /> Back to RouteBloom
         </button>
         <div className="auth-photo-caption">
           <Brand light />
@@ -229,7 +229,7 @@ export default function LoginPage() {
           </div>
 
           <p className="auth-switch">
-            New to RoamWise?{" "}
+            New to RouteBloom?{" "}
             <button
               type="button"
               onClick={() =>

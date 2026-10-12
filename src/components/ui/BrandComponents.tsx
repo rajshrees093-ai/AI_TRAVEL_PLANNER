@@ -5,10 +5,61 @@ import {
   XCircle,
   Info,
   X,
-  Compass,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+
+export function RouteBloomMark({ size = 24 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      {/* Outer subtle compass ring */}
+      <circle
+        cx="20"
+        cy="20"
+        r="15.5"
+        stroke="currentColor"
+        strokeOpacity="0.28"
+        strokeWidth="1.35"
+        strokeDasharray="2.5 2.5"
+      />
+      {/* 4 Blooming Cardinal Petals */}
+      <path
+        d="M20 4.5C22.9 10.1 22.9 14.8 20 18.4C17.1 14.8 17.1 10.1 20 4.5Z"
+        fill="currentColor"
+      />
+      <path
+        d="M35.5 20C29.9 22.9 25.2 22.9 21.6 20C25.2 17.1 29.9 17.1 35.5 20Z"
+        fill="currentColor"
+        fillOpacity="0.88"
+      />
+      <path
+        d="M20 35.5C17.1 29.9 17.1 25.2 20 21.6C22.9 25.2 22.9 29.9 20 35.5Z"
+        fill="currentColor"
+        fillOpacity="0.72"
+      />
+      <path
+        d="M4.5 20C10.1 17.1 14.8 17.1 18.4 20C14.8 22.9 10.1 22.9 4.5 20Z"
+        fill="currentColor"
+        fillOpacity="0.72"
+      />
+      {/* Diagonal Coral Route Needle & Bloom Petal */}
+      <path
+        d="M30.2 9.8L22.6 22.6L9.8 30.2L17.4 17.4L30.2 9.8Z"
+        fill="#FF8066"
+      />
+      {/* Center Pin */}
+      <circle cx="20" cy="20" r="3.1" fill="#FFFFFF" />
+      <circle cx="20" cy="20" r="1.4" fill="#087F8C" />
+    </svg>
+  );
+}
 
 export function Brand({
   light = false,
@@ -20,15 +71,15 @@ export function Brand({
   return (
     <span
       className={`brand-lockup ${light ? "brand-light" : ""} ${compact ? "brand-compact" : ""}`}
-      aria-label="RoamWise"
+      aria-label="RouteBloom"
     >
       <span className="brand-symbol">
-        <Compass size={21} strokeWidth={1.8} aria-hidden="true" />
+        <RouteBloomMark size={24} />
         <i />
       </span>
       {!compact && (
         <span className="brand-name">
-          roam<span>wise</span>
+          route<span>bloom</span>
         </span>
       )}
     </span>
@@ -134,7 +185,7 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="button button-outline button-small"
+            className="button button-quiet button-sm"
           >
             {cancelLabel}
           </button>
@@ -142,10 +193,8 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             className={cn(
-              "button button-small",
-              variant === "danger"
-                ? "bg-red-600 text-white hover:bg-red-700"
-                : "button-primary"
+              "button button-sm",
+              variant === "danger" ? "button-danger" : "button-primary"
             )}
           >
             {confirmLabel}

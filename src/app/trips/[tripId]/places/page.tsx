@@ -18,7 +18,7 @@ import { TripHeaderShell } from "@/components/trip/TripHeaderShell";
 import { useRoamWise } from "@/context/RoamWiseContext";
 import { getCandidatePlacesForDestination } from "@/lib/destinations-catalog";
 import { FoodPreference, TripActivity, VerifiedPlace } from "@/lib/types";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 const CATEGORY_FILTERS = [
   "All",
@@ -137,230 +137,170 @@ export default function PlacesAndRestaurantsPage({
       }
       breadcrumbs={[
         { label: "Dashboard", href: "/dashboard" },
-        { label: trip?.destinationName || "Trip", href: `/trips/${params.tripId}` },
+        {
+          label: trip?.destinationName || "Trip",
+          href: `/trips/${params.tripId}`,
+        },
         { label: "Places & Food" },
       ]}
     >
       <TripHeaderShell tripId={params.tripId}>
         {trip && (
-          <div className="space-y-6">
+          <div className="trip-detail-panel">
             {/* Search and Filter Bar */}
-            <div className="bg-surface border border-border rounded-2xl p-5 shadow-soft space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                {/* Search Input */}
-                <div className="md:col-span-2 flex items-center gap-2.5 bg-background border border-border rounded-xl px-3.5 py-2.5 focus-within:border-primary">
-                  <Search className="w-4 h-4 text-primary shrink-0" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={`Search attractions, restaurants, or cuisines in ${trip.destinationName}...`}
-                    className="bg-transparent text-xs sm:text-sm text-heading focus:outline-none w-full"
-                  />
-                </div>
+            <div className="places-controls">
+              <label className="search-field">
+                <Search className="w-4 h-4" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={`Search attractions, restaurants, or cuisines in ${trip.destinationName}...`}
+                />
+              </label>
 
-                {/* Price Filter */}
-                <select
-                  aria-label="Filter by price level"
-                  value={selectedPrice}
-                  onChange={(e) => setSelectedPrice(e.target.value)}
-                  className="px-3.5 py-2.5 rounded-xl bg-background border border-border text-xs font-semibold text-heading"
-                >
-                  <option value="ALL">All Price Levels</option>
-                  <option value="Free">Free Entry</option>
-                  <option value="$">$ Budget Friendly</option>
-                  <option value="$$">$$ Moderate</option>
-                  <option value="$$$">$$$ Signature</option>
-                </select>
+              <select
+                aria-label="Filter by price level"
+                value={selectedPrice}
+                onChange={(e) => setSelectedPrice(e.target.value)}
+              >
+                <option value="ALL">All Price Levels</option>
+                <option value="Free">Free Entry</option>
+                <option value="$">$ Budget Friendly</option>
+                <option value="$$">$$ Moderate</option>
+                <option value="$$$">$$$ Signature</option>
+              </select>
 
-                {/* Dietary Filter */}
-                <select
-                  aria-label="Filter by dietary support"
-                  value={selectedDiet}
-                  onChange={(e) => setSelectedDiet(e.target.value)}
-                  className="px-3.5 py-2.5 rounded-xl bg-background border border-border text-xs font-semibold text-heading"
-                >
-                  <option value="ALL">All Dietary Preferences</option>
-                  <option value="Vegetarian">Vegetarian Verified</option>
-                  <option value="Vegan">Vegan Verified</option>
-                  <option value="Non-Vegetarian">Non-Vegetarian</option>
-                </select>
+              <select
+                aria-label="Filter by dietary support"
+                value={selectedDiet}
+                onChange={(e) => setSelectedDiet(e.target.value)}
+              >
+                <option value="ALL">All Dietary Preferences</option>
+                <option value="Vegetarian">Vegetarian Verified</option>
+                <option value="Vegan">Vegan Verified</option>
+                <option value="Non-Vegetarian">Non-Vegetarian</option>
+              </select>
+            </div>
+
+            <div className="places-filter-panel">
+              <div className="place-categories">
+                {CATEGORY_FILTERS.map((cat) => {
+                  const active = selectedCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={`filter-chip ${active ? "active" : ""}`}
+                      onClick={() => setSelectedCategory(cat)}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Category Chips + Target Day Selector */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
-                <div className="flex flex-wrap items-center gap-2">
-                  {CATEGORY_FILTERS.map((cat) => {
-                    const active = selectedCategory === cat;
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => setSelectedCategory(cat)}
-                        className={cn(
-                          "px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                          active
-                            ? "bg-primary text-white"
-                            : "bg-background border border-border text-muted hover:text-heading"
-                        )}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-muted font-medium">Add stops to:</span>
-                  <select
-                    value={targetDayToAdd}
-                    onChange={(e) =>
-                      setTargetDayToAdd(Number(e.target.value))
-                    }
-                    className="px-3 py-1.5 rounded-xl bg-background border border-border text-xs font-bold text-primary"
-                  >
-                    {trip.days.map((d) => (
-                      <option key={d.id} value={d.dayNumber}>
-                        Day {d.dayNumber} ({d.date})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="add-target-day">
+                <span>Add stops to:</span>
+                <select
+                  value={targetDayToAdd}
+                  onChange={(e) => setTargetDayToAdd(Number(e.target.value))}
+                >
+                  {trip.days.map((d) => (
+                    <option key={d.id} value={d.dayNumber}>
+                      Day {d.dayNumber} ({d.date})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
             {/* Cards Grid */}
             {filteredPlaces.length === 0 ? (
-              <div className="bg-surface border border-border rounded-2xl p-12 text-center">
-                <p className="text-base font-heading font-bold text-heading">
-                  No places matched your current filters
-                </p>
-                <p className="text-xs text-muted mt-1">
-                  Try clearing your search or selecting &ldquo;All&rdquo;
-                  categories.
-                </p>
+              <div className="empty-panel">
+                <h3>No places matched your current filters</h3>
+                <p>Try clearing your search or selecting “All” categories.</p>
                 <button
                   type="button"
+                  className="button button-primary"
                   onClick={() => {
                     setSearchQuery("");
                     setSelectedCategory("All");
                     setSelectedPrice("ALL");
                     setSelectedDiet("ALL");
                   }}
-                  className="mt-4 px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold"
                 >
                   Reset Filters
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="place-grid">
                 {filteredPlaces.map((place) => {
                   const isInItinerary = trip.days.some((d) =>
                     d.activities.some((a) => a.placeId === place.placeId)
                   );
 
                   return (
-                    <div
-                      key={place.placeId}
-                      className="bg-surface border border-border rounded-2xl overflow-hidden shadow-soft hover:shadow-elevated transition-all flex flex-col justify-between"
-                    >
-                      <div>
-                        <div
-                          onClick={() => setDetailPlace(place)}
-                          className="relative h-48 overflow-hidden cursor-pointer group"
-                        >
-                          <img
-                            src={place.photoUrl}
-                            alt={place.name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                          <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-                            <span className="px-2.5 py-1 rounded-full bg-surface/90 backdrop-blur-xs text-heading text-[11px] font-bold">
-                              {place.category}
-                            </span>
-                            {place.isHiddenGem && (
-                              <span className="px-2.5 py-1 rounded-full bg-accent text-white text-[11px] font-bold flex items-center gap-1">
-                                <Sparkles className="w-3 h-3" />
-                                Hidden Gem
-                              </span>
-                            )}
-                          </div>
-                          {place.priceLevel && (
-                            <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/55 text-white text-xs font-bold">
-                              {place.priceLevel}
-                            </span>
-                          )}
-                          <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white text-xs">
-                            <span className="font-semibold">
-                              {place.subcategory}
-                            </span>
-                            {place.rating && (
-                              <span className="inline-flex items-center gap-1 bg-black/45 px-2 py-0.5 rounded-full">
-                                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                                <strong>{place.rating}</strong>
-                              </span>
-                            )}
-                          </div>
+                    <article key={place.placeId} className="place-card">
+                      <div
+                        className="place-card-art"
+                        onClick={() => setDetailPlace(place)}
+                        style={{
+                          cursor: "pointer",
+                          backgroundImage: `linear-gradient(180deg, rgba(16, 24, 40, 0.08), rgba(16, 24, 40, 0.72)), url(${place.photoUrl})`,
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                          <span>{place.category}</span>
+                          {place.priceLevel && <span>{place.priceLevel}</span>}
                         </div>
 
-                        <div className="p-5">
-                          <button
-                            type="button"
-                            onClick={() => setDetailPlace(place)}
-                            className="text-left group"
-                          >
-                            <h3 className="text-base font-heading font-bold text-heading group-hover:text-primary transition-colors">
-                              {place.name}
-                            </h3>
-                          </button>
-
-                          <p className="text-xs text-muted mt-1.5 line-clamp-2 leading-relaxed">
-                            {place.description}
-                          </p>
-
-                          <div className="mt-3 space-y-1.5 text-xs text-muted">
-                            <p className="flex items-center gap-1.5 truncate">
-                              <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-                              <span className="truncate">{place.address}</span>
-                            </p>
-                            {place.openingHours && (
-                              <p className="flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
-                                <span>{place.openingHours}</span>
-                              </p>
-                            )}
-                            {place.cuisine && (
-                              <p className="flex items-center gap-1.5">
-                                <Utensils className="w-3.5 h-3.5 text-primary shrink-0" />
-                                <span>Cuisine: {place.cuisine}</span>
-                              </p>
+                        <div>
+                          {place.isHiddenGem && (
+                            <span style={{ background: "rgba(255, 128, 102, 0.85)", marginBottom: "6px" }}>
+                              <Sparkles className="w-3 h-3" /> Hidden Gem
+                            </span>
+                          )}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff" }}>
+                            <strong>{place.subcategory}</strong>
+                            {place.rating && (
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                <Star className="w-3.5 h-3.5" /> {place.rating}
+                              </span>
                             )}
                           </div>
-
-                          {/* Dietary Badges when supported */}
-                          {place.dietarySupported &&
-                            place.dietarySupported.length > 0 && (
-                              <div className="mt-3 flex flex-wrap gap-1.5">
-                                {place.dietarySupported.map((d) => (
-                                  <span
-                                    key={d}
-                                    className="px-2 py-0.5 rounded-md bg-success/10 text-success text-[10px] font-semibold"
-                                  >
-                                    ✓ {d}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
                         </div>
                       </div>
 
-                      <div className="px-5 pb-5 pt-3 border-t border-border flex items-center justify-between gap-2">
+                      <div className="place-card-body">
                         <div>
-                          <span className="text-[10px] uppercase tracking-wider text-muted block">
-                            Est. Group Cost
+                          <h3
+                            onClick={() => setDetailPlace(place)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            {place.name}
+                          </h3>
+                          <p>{place.description}</p>
+                        </div>
+
+                        <div className="place-card-meta">
+                          <span>
+                            <MapPin className="w-3.5 h-3.5" /> {place.address}
                           </span>
-                          <span className="text-xs font-bold text-heading">
+                          {place.openingHours && (
+                            <span>
+                              <Clock className="w-3.5 h-3.5" />{" "}
+                              {place.openingHours}
+                            </span>
+                          )}
+                          {place.cuisine && (
+                            <span>
+                              <Utensils className="w-3.5 h-3.5" />{" "}
+                              {place.cuisine}
+                            </span>
+                          )}
+                          <span>
+                            Est. Group Cost:{" "}
                             {place.estimatedCostINR === 0
                               ? "Free"
                               : formatCurrency(
@@ -370,7 +310,40 @@ export default function PlacesAndRestaurantsPage({
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        {place.dietarySupported &&
+                          place.dietarySupported.length > 0 && (
+                            <div className="place-categories">
+                              {place.dietarySupported.map((d) => (
+                                <span key={d} className="pill-badge">
+                                  ✓ {d}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                        <div className="place-card-actions">
+                          <button
+                            type="button"
+                            className={`button ${
+                              isInItinerary ? "button-quiet" : "button-primary"
+                            } button-sm`}
+                            onClick={() =>
+                              handleAddPlaceToDay(place, targetDayToAdd)
+                            }
+                          >
+                            {isInItinerary ? (
+                              <>
+                                <Check className="w-3.5 h-3.5" /> Add Again (Day{" "}
+                                {targetDayToAdd})
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-3.5 h-3.5" /> Add to Day{" "}
+                                {targetDayToAdd}
+                              </>
+                            )}
+                          </button>
+
                           <a
                             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                               `${place.name} ${place.address}`
@@ -378,37 +351,13 @@ export default function PlacesAndRestaurantsPage({
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label={`Open ${place.name} in Google Maps`}
-                            className="p-2 rounded-xl border border-border text-muted hover:text-heading"
+                            className="button button-quiet button-sm"
                           >
-                            <ExternalLink className="w-4 h-4" />
+                            Map <ExternalLink className="w-3.5 h-3.5" />
                           </a>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleAddPlaceToDay(place, targetDayToAdd)
-                            }
-                            className={cn(
-                              "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors",
-                              isInItinerary
-                                ? "bg-sand text-heading hover:bg-primary hover:text-white"
-                                : "bg-primary hover:bg-primary-dark text-white"
-                            )}
-                          >
-                            {isInItinerary ? (
-                              <>
-                                <Check className="w-3.5 h-3.5" />
-                                <span>Add Again (Day {targetDayToAdd})</span>
-                              </>
-                            ) : (
-                              <>
-                                <Plus className="w-3.5 h-3.5" />
-                                <span>Add to Day {targetDayToAdd}</span>
-                              </>
-                            )}
-                          </button>
                         </div>
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
@@ -437,7 +386,7 @@ export default function PlacesAndRestaurantsPage({
                       <X className="w-5 h-5" />
                     </button>
                     <div className="absolute bottom-4 left-6 right-6 text-white">
-                      <span className="px-2.5 py-1 rounded-full bg-primary text-xs font-bold">
+                      <span className="hero-badge">
                         {detailPlace.category} • {detailPlace.subcategory}
                       </span>
                       <h3 className="text-2xl font-heading font-extrabold mt-2">
@@ -452,46 +401,46 @@ export default function PlacesAndRestaurantsPage({
                     </p>
 
                     {detailPlace.whyVisit && (
-                      <div className="p-3.5 rounded-xl bg-sand/50 border border-border text-xs text-heading">
+                      <div className="selected-place">
                         <strong>Traveler Highlight:</strong>{" "}
-                        {detailPlace.whyVisit}
+                        <span>{detailPlace.whyVisit}</span>
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      <div className="p-3 rounded-xl bg-background border border-border">
-                        <span className="text-muted block">Address</span>
-                        <strong className="text-heading">
-                          {detailPlace.address}
-                        </strong>
+                    <div className="review-cards">
+                      <div className="review-card">
+                        <div>
+                          <span>Address</span>
+                          <strong>{detailPlace.address}</strong>
+                        </div>
                       </div>
-                      <div className="p-3 rounded-xl bg-background border border-border">
-                        <span className="text-muted block">
-                          Opening Hours & Suggested Duration
-                        </span>
-                        <strong className="text-heading">
-                          {detailPlace.openingHours || "09:00 AM – 06:00 PM"} •{" "}
-                          {detailPlace.recommendedDurationMins} mins
-                        </strong>
+                      <div className="review-card">
+                        <div>
+                          <span>Opening Hours & Suggested Duration</span>
+                          <strong>
+                            {detailPlace.openingHours || "09:00 AM – 06:00 PM"}{" "}
+                            • {detailPlace.recommendedDurationMins} mins
+                          </strong>
+                        </div>
                       </div>
-                      <div className="p-3 rounded-xl bg-background border border-border">
-                        <span className="text-muted block">
-                          Verified Rating & Reviews
-                        </span>
-                        <strong className="text-heading">
-                          ★ {detailPlace.rating || 4.5} (
-                          {(detailPlace.reviewCount || 1200).toLocaleString()}{" "}
-                          reviews)
-                        </strong>
+                      <div className="review-card">
+                        <div>
+                          <span>Verified Rating & Reviews</span>
+                          <strong>
+                            ★ {detailPlace.rating || 4.5} (
+                            {(detailPlace.reviewCount || 1200).toLocaleString()}{" "}
+                            reviews)
+                          </strong>
+                        </div>
                       </div>
-                      <div className="p-3 rounded-xl bg-background border border-border">
-                        <span className="text-muted block">
-                          GPS Coordinates & Place ID
-                        </span>
-                        <strong className="text-heading font-mono text-[11px]">
-                          {detailPlace.lat}, {detailPlace.lng} (
-                          {detailPlace.placeId.slice(0, 14)})
-                        </strong>
+                      <div className="review-card">
+                        <div>
+                          <span>GPS Coordinates & Place ID</span>
+                          <strong>
+                            {detailPlace.lat}, {detailPlace.lng} (
+                            {detailPlace.placeId.slice(0, 14)})
+                          </strong>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -503,19 +452,23 @@ export default function PlacesAndRestaurantsPage({
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-border bg-surface text-xs font-semibold text-heading"
+                      className="button button-quiet button-sm"
                     >
                       <span>Open in Google Maps</span>
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
 
-                    <div className="flex items-center gap-2">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <select
                         value={targetDayToAdd}
                         onChange={(e) =>
                           setTargetDayToAdd(Number(e.target.value))
                         }
-                        className="px-3 py-2.5 rounded-xl bg-surface border border-border text-xs font-bold text-heading"
+                        style={{
+                          padding: "8px 12px",
+                          borderRadius: "12px",
+                          border: "1px solid var(--line)",
+                        }}
                       >
                         {trip.days.map((d) => (
                           <option key={d.id} value={d.dayNumber}>
@@ -528,7 +481,7 @@ export default function PlacesAndRestaurantsPage({
                         onClick={() =>
                           handleAddPlaceToDay(detailPlace, targetDayToAdd)
                         }
-                        className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold"
+                        className="button button-primary button-sm"
                       >
                         + Add to Day {targetDayToAdd}
                       </button>

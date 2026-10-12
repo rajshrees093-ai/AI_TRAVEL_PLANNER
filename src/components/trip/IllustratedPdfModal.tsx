@@ -138,7 +138,7 @@ export function IllustratedPdfModal({
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>${trip.title} — RoamWise Illustrated Travel Itinerary PDF</title>
+  <title>${trip.title} — RouteBloom Illustrated Travel Itinerary PDF</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -308,7 +308,7 @@ export function IllustratedPdfModal({
   <div class="container">
     <div class="hero">
       <div class="hero-top">
-        <span class="brand-badge">RoamWise • Illustrated Travel & Pilgrimage Dossier</span>
+        <span class="brand-badge">RouteBloom • Illustrated Travel & Pilgrimage Dossier</span>
       </div>
       <div class="hero-bottom">
         <h1>${trip.title}</h1>
@@ -406,7 +406,7 @@ export function IllustratedPdfModal({
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-");
     a.href = url;
-    a.download = `RoamWise-${slug}-Illustrated-Itinerary.html`;
+    a.download = `RouteBloom-${slug}-Illustrated-Itinerary.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -486,7 +486,7 @@ export function IllustratedPdfModal({
               <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-between text-white">
                 <div className="flex items-center justify-between">
                   <span className="px-3 py-1 rounded-full bg-primary text-white text-xs font-bold uppercase tracking-wider">
-                    RoamWise Official Illustrated Travel Plan
+                    RouteBloom Official Illustrated Travel Plan
                   </span>
                   <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold">
                     {trip.durationDays} Days • {totalStops} Verified Places

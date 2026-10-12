@@ -8,9 +8,6 @@ import {
   CheckCircle2,
   X,
   Save,
-  Sliders,
-  Wallet,
-  Clock,
   ArrowRight,
 } from "lucide-react";
 import { DashboardWorkspaceLayout } from "@/components/layout/DashboardWorkspaceLayout";
@@ -21,7 +18,7 @@ import {
   proposeConversationalAdjustment,
 } from "@/lib/ai-assistant";
 import { FoodPreference, TravelGroupType, TravelPace } from "@/lib/types";
-import { calculateDaysBetween, cn, formatCurrency } from "@/lib/utils";
+import { calculateDaysBetween, formatCurrency } from "@/lib/utils";
 
 const SUGGESTED_PROMPTS = [
   "Make Day 2 more relaxed.",
@@ -65,7 +62,6 @@ export default function EditAndCustomizeTripPage({
     useState<FoodPreference>("No Preference");
   const [interests, setInterests] = useState<string[]>([]);
 
-  // Conversational AI Editor State
   const [aiPrompt, setAiPrompt] = useState("");
   const [pendingProposal, setPendingProposal] =
     useState<ConversationalProposal | null>(null);
@@ -126,7 +122,7 @@ export default function EditAndCustomizeTripPage({
     if (!pendingProposal) return;
     await saveOrUpdateTrip(
       pendingProposal.proposedTrip,
-      "Applied RoamWise AI adjustments!"
+      "Applied RouteBloom AI adjustments!"
     );
     setPendingProposal(null);
     setAiPrompt("");
@@ -141,350 +137,133 @@ export default function EditAndCustomizeTripPage({
       }
       breadcrumbs={[
         { label: "Dashboard", href: "/dashboard" },
-        { label: trip?.destinationName || "Trip", href: `/trips/${params.tripId}` },
+        {
+          label: trip?.destinationName || "Trip",
+          href: `/trips/${params.tripId}`,
+        },
         { label: "Edit & Customize" },
       ]}
     >
       <TripHeaderShell tripId={params.tripId}>
         {trip && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Column (7/12): Structured Trip Parameter Form */}
-            <form
-              onSubmit={handleSaveParameterEdits}
-              className="lg:col-span-7 bg-surface border border-border rounded-2xl p-6 shadow-soft space-y-6"
-            >
-              <div className="flex items-center justify-between border-b border-border pb-4">
-                <div>
-                  <h3 className="text-lg font-heading font-bold text-heading flex items-center gap-2">
-                    <Sliders className="w-5 h-5 text-primary" />
-                    <span>Edit Trip Parameters</span>
-                  </h3>
-                  <p className="text-xs text-muted mt-0.5">
-                    Modify dates, travelers, budget, or preferences without
-                    losing your custom daily activities.
-                  </p>
-                </div>
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold shadow-sm transition-colors"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Save Changes</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-heading mb-1">
-                    Destination Name
-                  </label>
-                  <input
-                    type="text"
-                    value={destinationName}
-                    onChange={(e) => setDestinationName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm text-heading"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-heading mb-1">
-                    Total Budget ({trip.currency})
-                  </label>
-                  <input
-                    type="number"
-                    min={1000}
-                    step={1000}
-                    value={budget}
-                    onChange={(e) => setBudget(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm font-bold text-heading"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-heading mb-1">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm text-heading"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-heading mb-1">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    min={startDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm text-heading"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-heading mb-1">
-                    Number of Travelers
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={30}
-                    value={travelers}
-                    onChange={(e) => setTravelers(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm text-heading"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-heading mb-1">
-                    Travel Group Type
-                  </label>
-                  <select
-                    value={travelType}
-                    onChange={(e) =>
-                      setTravelType(e.target.value as TravelGroupType)
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm text-heading"
-                  >
-                    <option value="Solo">Solo</option>
-                    <option value="Couple">Couple</option>
-                    <option value="Friends">Friends</option>
-                    <option value="Family">Family</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-heading mb-1">
-                    Travel Pace
-                  </label>
-                  <select
-                    value={travelPace}
-                    onChange={(e) =>
-                      setTravelPace(e.target.value as TravelPace)
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm text-heading"
-                  >
-                    <option value="Relaxed">Relaxed</option>
-                    <option value="Balanced">Balanced</option>
-                    <option value="Packed">Packed</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-heading mb-1">
-                    Food Preference
-                  </label>
-                  <select
-                    value={foodPreference}
-                    onChange={(e) =>
-                      setFoodPreference(e.target.value as FoodPreference)
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm text-heading"
-                  >
-                    <option value="Vegetarian">Vegetarian</option>
-                    <option value="Non-Vegetarian">Non-Vegetarian</option>
-                    <option value="Vegan">Vegan</option>
-                    <option value="No Preference">No Preference</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Interests Multi-Select */}
-              <div>
-                <label className="block text-xs font-semibold text-heading mb-2">
-                  Active Interests
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {ALL_INTERESTS.map((item) => {
-                    const active = interests.includes(item);
-                    return (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => toggleInterest(item)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors",
-                          active
-                            ? "bg-primary text-white border-primary"
-                            : "bg-background border-border text-muted hover:text-heading"
-                        )}
-                      >
-                        {active ? `✓ ${item}` : item}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Quick Link to Edit Individual Daily Activities */}
-              <div className="p-4 rounded-xl bg-background border border-border flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-heading">
-                    Daily Activities ({trip.days.length} Days)
-                  </p>
-                  <p className="text-xs text-muted">
-                    Reorder, replace, add, or delete individual time slots in
-                    the Timeline tab.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/trips/${trip.id}/itinerary`)}
-                  className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl bg-surface border border-border text-xs font-semibold text-primary hover:bg-sand/40 shrink-0"
-                >
-                  <span>Edit Timeline</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </form>
-
-            {/* Right Column (5/12): Conversational AI Editor */}
-            <div className="lg:col-span-5 bg-surface border border-border rounded-2xl p-6 shadow-soft space-y-5">
-              <div>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-2">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Conversational AI Editor
+          <div className="trip-detail-panel edit-panel">
+            {/* Conversational AI Editor */}
+            <div className="ai-edit-box">
+              <div className="ai-edit-head">
+                <span className="ai-edit-icon">
+                  <Sparkles className="w-5 h-5" />
                 </span>
-                <h3 className="text-xl font-heading font-bold text-heading">
-                  Ask RoamWise to Adjust Your Trip
-                </h3>
-                <p className="text-xs text-muted mt-1 leading-relaxed">
-                  Describe how you&apos;d like to refine your itinerary.
-                  RoamWise will preview the proposed changes and impact on
-                  budget and transit time before applying.
-                </p>
-              </div>
-
-              {/* Suggested Request Chips */}
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted mb-2">
-                  Suggested Requests
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {SUGGESTED_PROMPTS.map((prompt) => (
-                    <button
-                      key={prompt}
-                      type="button"
-                      onClick={() => handleProposeAIAdjustment(prompt)}
-                      className="px-3 py-1.5 rounded-xl bg-background hover:bg-primary/10 border border-border hover:border-primary/40 text-xs font-medium text-heading transition-colors text-left"
-                    >
-                      &ldquo;{prompt}&rdquo;
-                    </button>
-                  ))}
+                <div>
+                  <span className="eyebrow">Conversational AI Editor</span>
+                  <h3>Ask RouteBloom to Adjust Your Trip</h3>
+                  <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
+                    Describe how you’d like to refine your itinerary. RouteBloom
+                    will preview the proposed changes and impact on budget and
+                    transit time before applying.
+                  </p>
                 </div>
               </div>
 
-              {/* Custom Instruction Input */}
+              <div className="suggestion-chips">
+                {SUGGESTED_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    className="filter-chip"
+                    onClick={() => handleProposeAIAdjustment(prompt)}
+                  >
+                    “{prompt}”
+                  </button>
+                ))}
+              </div>
+
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleProposeAIAdjustment(aiPrompt);
                 }}
-                className="flex gap-2"
+                style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}
               >
                 <input
                   type="text"
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
                   placeholder="e.g. Make Day 2 more relaxed..."
-                  aria-label="Ask RoamWise to adjust your trip"
-                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-background border border-border text-xs sm:text-sm text-heading focus:outline-none focus:border-primary"
+                  aria-label="Ask RouteBloom to adjust your trip"
+                  style={{
+                    flex: 1,
+                    minWidth: "220px",
+                    border: "1px solid var(--line)",
+                    borderRadius: "14px",
+                    padding: "12px 14px",
+                    background: "var(--paper)",
+                  }}
                 />
-                <button
-                  type="submit"
-                  className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold flex items-center gap-1.5 shrink-0"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Preview</span>
+                <button type="submit" className="button button-primary">
+                  <Send className="w-4 h-4" /> Preview
                 </button>
               </form>
 
-              {/* Review & Confirmation Step Before Applying Major Changes */}
               {pendingProposal && (
-                <div className="p-4 rounded-2xl bg-sand/50 border-2 border-primary/40 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
+                <div className="proposal-review">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                        Proposed Itinerary Changes
-                      </span>
-                      <h4 className="text-sm font-heading font-bold text-heading">
-                        &ldquo;{pendingProposal.instruction}&rdquo;
-                      </h4>
+                      <span className="eyebrow">Proposed Itinerary Changes</span>
+                      <h4>“{pendingProposal.instruction}”</h4>
                     </div>
                     <button
                       type="button"
+                      className="icon-button"
                       onClick={() => setPendingProposal(null)}
-                      className="p-1 text-muted hover:text-heading"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <p className="text-xs text-heading leading-relaxed">
-                    {pendingProposal.explanation}
-                  </p>
+                  <p>{pendingProposal.explanation}</p>
 
-                  <ul className="space-y-1.5 text-xs text-muted bg-surface p-3 rounded-xl border border-border">
+                  <div style={{ display: "grid", gap: "6px" }}>
                     {pendingProposal.changesList.map((change, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0 mt-0.5" />
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.86rem" }}>
+                        <CheckCircle2 className="w-4 h-4" style={{ color: "var(--sage)" }} />
                         <span>{change}</span>
-                      </li>
+                      </div>
                     ))}
-                  </ul>
-
-                  {/* Impact on Budget and Schedule */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-surface border border-border flex items-center gap-2">
-                      <Wallet className="w-4 h-4 text-primary shrink-0" />
-                      <div>
-                        <span className="text-[10px] text-muted block">
-                          Budget Impact
-                        </span>
-                        <strong className="text-heading">
-                          {pendingProposal.budgetDelta <= 0
-                            ? `${formatCurrency(
-                                pendingProposal.budgetDelta,
-                                trip.currency
-                              )}`
-                            : `+${formatCurrency(
-                                pendingProposal.budgetDelta,
-                                trip.currency
-                              )}`}
-                        </strong>
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-surface border border-border flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-primary shrink-0" />
-                      <div>
-                        <span className="text-[10px] text-muted block">
-                          Transit Impact
-                        </span>
-                        <strong className="text-heading">
-                          {pendingProposal.travelTimeDeltaMinutes <= 0
-                            ? `${pendingProposal.travelTimeDeltaMinutes} mins`
-                            : `+${pendingProposal.travelTimeDeltaMinutes} mins`}
-                        </strong>
-                      </div>
-                    </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2 pt-2">
+                  <div className="place-categories">
+                    <span className="pill-badge">
+                      Budget Impact:{" "}
+                      {pendingProposal.budgetDelta <= 0
+                        ? formatCurrency(
+                            pendingProposal.budgetDelta,
+                            trip.currency
+                          )
+                        : `+${formatCurrency(
+                            pendingProposal.budgetDelta,
+                            trip.currency
+                          )}`}
+                    </span>
+                    <span className="pill-badge">
+                      Transit Impact:{" "}
+                      {pendingProposal.travelTimeDeltaMinutes <= 0
+                        ? `${pendingProposal.travelTimeDeltaMinutes} mins`
+                        : `+${pendingProposal.travelTimeDeltaMinutes} mins`}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
                     <button
                       type="button"
+                      className="button button-quiet button-sm"
                       onClick={() => setPendingProposal(null)}
-                      className="px-3.5 py-2 rounded-xl border border-border bg-surface text-xs font-medium text-heading"
                     >
                       Discard
                     </button>
                     <button
                       type="button"
+                      className="button button-primary button-sm"
                       onClick={handleConfirmProposal}
-                      className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold"
                     >
                       Confirm & Apply Changes
                     </button>
@@ -492,6 +271,143 @@ export default function EditAndCustomizeTripPage({
                 </div>
               )}
             </div>
+
+            {/* Structured Trip Parameter Form */}
+            <form onSubmit={handleSaveParameterEdits} className="space-y-6">
+              <div className="panel-heading">
+                <div>
+                  <span className="eyebrow">Trip Parameters</span>
+                  <h2>Edit Trip Parameters</h2>
+                </div>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    type="button"
+                    className="button button-quiet button-sm"
+                    onClick={() => router.push(`/trips/${trip.id}/itinerary`)}
+                  >
+                    Edit Daily Timeline <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button type="submit" className="button button-primary button-sm">
+                    <Save className="w-4 h-4" /> Save Changes
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-grid">
+                <label className="form-field">
+                  <span>Destination Name</span>
+                  <input
+                    type="text"
+                    value={destinationName}
+                    onChange={(e) => setDestinationName(e.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Total Budget ({trip.currency})</span>
+                  <input
+                    type="number"
+                    min={1000}
+                    step={1000}
+                    value={budget}
+                    onChange={(e) => setBudget(Number(e.target.value))}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Start Date</span>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>End Date</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    min={startDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Number of Travelers</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={travelers}
+                    onChange={(e) => setTravelers(Number(e.target.value))}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Travel Group Type</span>
+                  <select
+                    value={travelType}
+                    onChange={(e) =>
+                      setTravelType(e.target.value as TravelGroupType)
+                    }
+                  >
+                    <option value="Solo">Solo</option>
+                    <option value="Couple">Couple</option>
+                    <option value="Friends">Friends</option>
+                    <option value="Family">Family</option>
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <span>Travel Pace</span>
+                  <select
+                    value={travelPace}
+                    onChange={(e) =>
+                      setTravelPace(e.target.value as TravelPace)
+                    }
+                  >
+                    <option value="Relaxed">Relaxed</option>
+                    <option value="Balanced">Balanced</option>
+                    <option value="Packed">Packed</option>
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <span>Food Preference</span>
+                  <select
+                    value={foodPreference}
+                    onChange={(e) =>
+                      setFoodPreference(e.target.value as FoodPreference)
+                    }
+                  >
+                    <option value="Vegetarian">Vegetarian</option>
+                    <option value="Non-Vegetarian">Non-Vegetarian</option>
+                    <option value="Vegan">Vegan</option>
+                    <option value="No Preference">No Preference</option>
+                  </select>
+                </label>
+
+                <div className="form-field full-span">
+                  <span>Active Interests</span>
+                  <div className="place-categories">
+                    {ALL_INTERESTS.map((item) => {
+                      const active = interests.includes(item);
+                      return (
+                        <button
+                          key={item}
+                          type="button"
+                          className={`filter-chip ${active ? "active" : ""}`}
+                          onClick={() => toggleInterest(item)}
+                        >
+                          {active ? `✓ ${item}` : item}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
         )}
       </TripHeaderShell>

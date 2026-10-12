@@ -204,7 +204,7 @@ export default function LandingPage() {
         <div className="landing-links">
           <a href="#destinations">Explore destinations</a>
           <a href="#how-it-works">How it works</a>
-          <a href="#features">Why RoamWise</a>
+          <a href="#features">Why RouteBloom</a>
         </div>
         <div className="landing-auth">
           {isAuthenticated ? (
@@ -360,7 +360,7 @@ export default function LandingPage() {
               type="submit"
               className="button button-primary quick-submit"
             >
-              Plan with RoamWise <ArrowRight size={15} />
+              Plan with RouteBloom <ArrowRight size={15} />
             </button>
           </div>
           <p className="quick-caption">
@@ -577,7 +577,7 @@ export default function LandingPage() {
           <span className="footer-tag">Explore more. Plan less.</span>
         </div>
         <div className="footer-bottom">
-          <span>© 2026 RoamWise</span>
+          <span>© 2026 RouteBloom</span>
           <span>
             Itinerary estimates and timings are for planning guidance.
           </span>

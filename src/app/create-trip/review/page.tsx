@@ -185,7 +185,7 @@ export default function TripReviewPage() {
             <div className="review-disclaimer">
               <Sparkles className="w-4 h-4" />
               <span>
-                RoamWise will assemble verified landmarks, geographic route
+                RouteBloom will assemble verified landmarks, geographic route
                 sequences, dining recommendations, and itemized budget estimates
                 for your journey.
               </span>

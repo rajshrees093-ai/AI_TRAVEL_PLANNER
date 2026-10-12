@@ -225,7 +225,7 @@ export default function DashboardPage() {
           <div className="banner-mark">
             <Compass size={80} strokeWidth={0.7} />
             <span>
-              RW
+              RB
               <br />
               <small>TRAVEL NOTES</small>
             </span>

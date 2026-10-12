@@ -7,20 +7,18 @@ import {
   Search,
   LayoutGrid,
   List,
-  Calendar,
-  Clock,
-  Users,
   Edit3,
   Copy,
   Trash2,
   Share2,
   Plus,
   Compass,
+  ArrowRight,
 } from "lucide-react";
 import { DashboardWorkspaceLayout } from "@/components/layout/DashboardWorkspaceLayout";
 import { useRoamWise } from "@/context/RoamWiseContext";
 import { ConfirmDialog } from "@/components/ui/BrandComponents";
-import { cn, formatCurrency, formatDateRange } from "@/lib/utils";
+import { formatCurrency, formatDateRange } from "@/lib/utils";
 
 export default function SavedTripsPage() {
   const router = useRouter();
@@ -80,10 +78,7 @@ export default function SavedTripsPage() {
         const data = await res.json();
         const url = `${window.location.origin}/share/${data.shareLink.token}`;
         navigator.clipboard.writeText(url);
-        showToast(
-          `Copied share link for ${destName}!`,
-          url
-        );
+        showToast(`Copied share link for ${destName}!`, url);
       }
     } catch {
       const fallbackUrl = `${window.location.origin}/share/roamwise-manali-escape-demo`;
@@ -100,92 +95,83 @@ export default function SavedTripsPage() {
         { label: "Saved Trips" },
       ]}
     >
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold text-heading">
-            Your Travel Collection
-          </h2>
-          <p className="text-sm text-muted mt-1">
-            Every journey you&apos;ve dreamed of, all in one place.
-          </p>
-        </div>
-
-        <Link
-          href="/create-trip/destination"
-          onClick={() => resetActiveDraft()}
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold shadow-sm transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Plan New Trip</span>
-        </Link>
-      </div>
-
-      {/* Filter, Search, Sort & View Mode Bar */}
-      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-soft mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3 flex-1">
-          <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-3.5 py-2 w-full sm:w-64 focus-within:border-primary">
-            <Search className="w-4 h-4 text-primary shrink-0" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search destination..."
-              aria-label="Search destination"
-              className="bg-transparent text-xs sm:text-sm text-heading focus:outline-none w-full"
-            />
+      <div className="saved-page">
+        <div className="welcome-row">
+          <div>
+            <span className="eyebrow">Saved Collection</span>
+            <h1>Your Travel Collection</h1>
+            <p>Every journey you’ve dreamed of, all in one place.</p>
           </div>
 
-          <div className="inline-flex rounded-xl bg-background border border-border p-1">
-            {(
-              [
-                { key: "ALL", label: "All" },
-                { key: "UPCOMING", label: "Upcoming" },
-                { key: "PAST", label: "Past" },
-                { key: "DRAFT", label: "Drafts" },
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setStatusFilter(tab.key)}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
-                  statusFilter === tab.key
-                    ? "bg-primary text-white"
-                    : "text-muted hover:text-heading"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between sm:justify-end gap-3">
-          <select
-            aria-label="Sort trips by"
-            value={sortBy}
-            onChange={(e) =>
-              setSortBy(e.target.value as "CREATED" | "TRAVEL_DATE")
-            }
-            className="px-3.5 py-2 rounded-xl bg-background border border-border text-xs font-semibold text-heading"
+          <Link
+            href="/create-trip/destination"
+            onClick={() => resetActiveDraft()}
+            className="button button-primary"
           >
-            <option value="TRAVEL_DATE">Sort by Travel Date</option>
-            <option value="CREATED">Sort by Date Created</option>
-          </select>
+            <Plus className="w-4 h-4" /> Plan New Trip
+          </Link>
+        </div>
 
-          <div className="inline-flex rounded-xl bg-background border border-border p-1">
+        {/* Filter, Search, Sort & View Mode Bar */}
+        <div className="saved-controls">
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px" }}>
+            <label className="search-field">
+              <Search className="w-4 h-4" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search destination..."
+                aria-label="Search destination"
+              />
+            </label>
+
+            <div className="place-categories">
+              {(
+                [
+                  { key: "ALL", label: "All" },
+                  { key: "UPCOMING", label: "Upcoming" },
+                  { key: "PAST", label: "Past" },
+                  { key: "DRAFT", label: "Drafts" },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={`filter-chip ${
+                    statusFilter === tab.key ? "active" : ""
+                  }`}
+                  onClick={() => setStatusFilter(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <select
+              aria-label="Sort trips by"
+              value={sortBy}
+              onChange={(e) =>
+                setSortBy(e.target.value as "CREATED" | "TRAVEL_DATE")
+              }
+              style={{
+                border: "1px solid var(--line)",
+                borderRadius: "14px",
+                padding: "10px 14px",
+                background: "var(--paper)",
+              }}
+            >
+              <option value="TRAVEL_DATE">Sort by Travel Date</option>
+              <option value="CREATED">Sort by Date Created</option>
+            </select>
+
             <button
               type="button"
               onClick={() => setViewMode("grid")}
               aria-label="Grid view"
-              className={cn(
-                "p-1.5 rounded-lg transition-colors",
-                viewMode === "grid"
-                  ? "bg-primary text-white"
-                  : "text-muted hover:text-heading"
-              )}
+              className={`filter-chip ${viewMode === "grid" ? "active" : ""}`}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
@@ -193,220 +179,117 @@ export default function SavedTripsPage() {
               type="button"
               onClick={() => setViewMode("list")}
               aria-label="List view"
-              className={cn(
-                "p-1.5 rounded-lg transition-colors",
-                viewMode === "list"
-                  ? "bg-primary text-white"
-                  : "text-muted hover:text-heading"
-              )}
+              className={`filter-chip ${viewMode === "list" ? "active" : ""}`}
             >
               <List className="w-4 h-4" />
             </button>
           </div>
         </div>
+
+        {/* Empty State */}
+        {filteredTrips.length === 0 ? (
+          <div className="empty-panel">
+            <Compass className="w-8 h-8" style={{ color: "var(--ocean)", margin: "0 auto" }} />
+            <h3>No saved itineraries match this view</h3>
+            <p>
+              Try switching your filter to “All” or create a new personalized
+              trip plan.
+            </p>
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: "8px" }}>
+              <button
+                type="button"
+                className="button button-quiet"
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("ALL");
+                }}
+              >
+                Reset Filters
+              </button>
+              <Link href="/create-trip/destination" className="button button-primary">
+                + Create New Trip
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div
+            className={`upcoming-grid saved-grid ${
+              viewMode === "list" ? "list" : ""
+            }`}
+          >
+            {filteredTrips.map((trip) => (
+              <div key={trip.id} className="saved-item">
+                <article className="trip-card">
+                  <div
+                    className="trip-card-art"
+                    style={{
+                      backgroundImage: `linear-gradient(180deg, rgba(16, 24, 40, 0.08), rgba(16, 24, 40, 0.72)), url(${trip.heroImage})`,
+                    }}
+                  >
+                    <span>
+                      {trip.status} • {trip.durationDays} Days
+                    </span>
+                    <div>
+                      <strong>{trip.destinationName}</strong>
+                      <small>{trip.destinationCountry}</small>
+                    </div>
+                  </div>
+                  <div className="trip-card-body">
+                    <p>{trip.themeTagline}</p>
+                    <div className="trip-card-meta">
+                      <span>{formatDateRange(trip.startDate, trip.endDate)}</span>
+                      <span>
+                        {trip.travelers} ({trip.travelType})
+                      </span>
+                      <span>{formatCurrency(trip.budget, trip.currency)}</span>
+                    </div>
+                    <div className="trip-card-actions">
+                      <Link href={`/trips/${trip.id}`} className="text-button">
+                        Open Trip <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+
+                <div className="saved-item-actions">
+                  <Link
+                    href={`/trips/${trip.id}/edit`}
+                    className="button button-quiet button-sm"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" /> Edit
+                  </Link>
+                  <button
+                    type="button"
+                    className="button button-quiet button-sm"
+                    onClick={async () => {
+                      const copy = await duplicateTrip(trip.id);
+                      if (copy) router.push(`/trips/${copy.id}`);
+                    }}
+                  >
+                    <Copy className="w-3.5 h-3.5" /> Duplicate
+                  </button>
+                  <button
+                    type="button"
+                    className="button button-quiet button-sm"
+                    onClick={() =>
+                      handleQuickShare(trip.id, trip.destinationName)
+                    }
+                  >
+                    <Share2 className="w-3.5 h-3.5" /> Share
+                  </button>
+                  <button
+                    type="button"
+                    className="button button-danger button-sm"
+                    onClick={() => setTripToDelete(trip.id)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Empty State */}
-      {filteredTrips.length === 0 ? (
-        <div className="bg-surface border border-border rounded-2xl p-12 text-center shadow-soft">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
-            <Compass className="w-7 h-7" />
-          </div>
-          <h3 className="text-xl font-heading font-bold text-heading">
-            No saved itineraries match this view
-          </h3>
-          <p className="text-xs sm:text-sm text-muted max-w-md mx-auto mt-1.5">
-            Try switching your filter to &ldquo;All&rdquo; or create a new
-            personalized trip plan.
-          </p>
-          <div className="mt-5 flex justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery("");
-                setStatusFilter("ALL");
-              }}
-              className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-heading"
-            >
-              Reset Filters
-            </button>
-            <Link
-              href="/create-trip/destination"
-              className="px-5 py-2 rounded-xl bg-primary text-white text-xs font-semibold"
-            >
-              + Create New Trip
-            </Link>
-          </div>
-        </div>
-      ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTrips.map((trip) => (
-            <div
-              key={trip.id}
-              className="bg-surface border border-border rounded-2xl overflow-hidden shadow-soft hover:shadow-elevated transition-all flex flex-col justify-between"
-            >
-              <div>
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={trip.heroImage}
-                    alt={trip.destinationName}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-                  <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-surface/90 text-heading text-[11px] font-bold">
-                    {trip.status}
-                  </span>
-                  <div className="absolute bottom-3 left-4 right-4 text-white">
-                    <h3 className="text-lg font-heading font-bold">
-                      {trip.destinationName}
-                    </h3>
-                    <p className="text-xs text-white/80">
-                      {trip.destinationCountry}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-5 space-y-2 text-xs text-muted">
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-primary" />
-                      {formatDateRange(trip.startDate, trip.endDate)}
-                    </span>
-                    <span className="inline-flex items-center gap-1 font-semibold text-heading">
-                      <Clock className="w-3.5 h-3.5 text-primary" />
-                      {trip.durationDays} Days
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-primary" />
-                      {trip.travelers} ({trip.travelType})
-                    </span>
-                    <span className="font-bold text-heading">
-                      {formatCurrency(trip.budget, trip.currency)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-5 pb-5 pt-3 border-t border-border flex items-center justify-between gap-2">
-                <Link
-                  href={`/trips/${trip.id}`}
-                  className="flex-1 py-2 px-3 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold text-center transition-colors"
-                >
-                  Open Trip
-                </Link>
-                <Link
-                  href={`/trips/${trip.id}/edit`}
-                  title="Edit Trip"
-                  className="p-2 rounded-xl border border-border text-muted hover:text-heading"
-                >
-                  <Edit3 className="w-4 h-4" />
-                </Link>
-                <button
-                  type="button"
-                  title="Duplicate Trip"
-                  onClick={async () => {
-                    const copy = await duplicateTrip(trip.id);
-                    if (copy) router.push(`/trips/${copy.id}`);
-                  }}
-                  className="p-2 rounded-xl border border-border text-muted hover:text-heading"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  title="Share Trip"
-                  onClick={() =>
-                    handleQuickShare(trip.id, trip.destinationName)
-                  }
-                  className="p-2 rounded-xl border border-border text-muted hover:text-heading"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  title="Delete Trip"
-                  onClick={() => setTripToDelete(trip.id)}
-                  className="p-2 rounded-xl border border-border text-muted hover:text-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filteredTrips.map((trip) => (
-            <div
-              key={trip.id}
-              className="bg-surface border border-border rounded-2xl p-4 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            >
-              <div className="flex items-center gap-4">
-                <img
-                  src={trip.heroImage}
-                  alt={trip.destinationName}
-                  className="w-20 h-20 rounded-xl object-cover shrink-0"
-                />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-heading font-bold text-heading">
-                      {trip.destinationName}
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full bg-sand text-heading text-[10px] font-bold">
-                      {trip.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted mt-1">
-                    {formatDateRange(trip.startDate, trip.endDate)} •{" "}
-                    {trip.durationDays} Days • {trip.travelers} Travelers •{" "}
-                    {formatCurrency(trip.budget, trip.currency)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 self-end sm:self-center">
-                <Link
-                  href={`/trips/${trip.id}`}
-                  className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold"
-                >
-                  Open Trip
-                </Link>
-                <Link
-                  href={`/trips/${trip.id}/edit`}
-                  className="px-3 py-2 rounded-xl border border-border text-xs font-medium text-heading"
-                >
-                  Edit
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => duplicateTrip(trip.id)}
-                  className="px-3 py-2 rounded-xl border border-border text-xs font-medium text-heading"
-                >
-                  Duplicate
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleQuickShare(trip.id, trip.destinationName)
-                  }
-                  className="px-3 py-2 rounded-xl border border-border text-xs font-medium text-heading"
-                >
-                  Share
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTripToDelete(trip.id)}
-                  className="p-2 rounded-xl border border-border text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       <ConfirmDialog
         open={Boolean(tripToDelete)}
