@@ -10,43 +10,43 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+export function Brand({
+  light = false,
+  compact = false,
+}: {
+  light?: boolean;
+  compact?: boolean;
+}) {
+  return (
+    <span
+      className={`brand-lockup ${light ? "brand-light" : ""} ${compact ? "brand-compact" : ""}`}
+      aria-label="RoamWise"
+    >
+      <span className="brand-symbol">
+        <Compass size={21} strokeWidth={1.8} aria-hidden="true" />
+        <i />
+      </span>
+      {!compact && (
+        <span className="brand-name">
+          roam<span>wise</span>
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function RoamWiseLogo({
   lightText = false,
   size = "md",
+  compact = false,
 }: {
   lightText?: boolean;
   size?: "sm" | "md" | "lg";
+  compact?: boolean;
 }) {
-  const iconBoxSize =
-    size === "sm" ? "w-8 h-8" : size === "lg" ? "w-11 h-11" : "w-9 h-9";
-  const textSize =
-    size === "sm" ? "text-lg" : size === "lg" ? "text-2xl" : "text-xl";
-
   return (
-    <Link
-      href="/"
-      className="inline-flex items-center gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
-    >
-      <div
-        className={cn(
-          iconBoxSize,
-          "rounded-xl bg-primary flex items-center justify-center text-white shadow-sm group-hover:bg-primary-dark transition-colors relative overflow-hidden"
-        )}
-      >
-        <Compass className="w-5 h-5 transition-transform duration-300 group-hover:rotate-45" />
-        <span className="sr-only">RoamWise Compass</span>
-      </div>
-      <div className="flex flex-col">
-        <span
-          className={cn(
-            "font-heading font-bold tracking-tight leading-none",
-            textSize,
-            lightText ? "text-white" : "text-heading"
-          )}
-        >
-          Roam<span className="text-primary">Wise</span>
-        </span>
-      </div>
+    <Link href="/" className="brand-anchor">
+      <Brand light={lightText} compact={compact || size === "sm"} />
     </Link>
   );
 }
@@ -65,55 +65,31 @@ export function ToastViewport({
 }) {
   if (toasts.length === 0) return null;
 
-  return (
-    <div
-      aria-live="polite"
-      className="fixed bottom-5 right-5 z-[100] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0 no-print"
-    >
-      {toasts.map((toast) => {
-        const Icon =
-          toast.type === "success"
-            ? CheckCircle2
-            : toast.type === "warning"
-            ? AlertTriangle
-            : toast.type === "error"
-            ? XCircle
-            : Info;
-        const iconColor =
-          toast.type === "success"
-            ? "text-success"
-            : toast.type === "warning"
-            ? "text-warning"
-            : toast.type === "error"
-            ? "text-red-600"
-            : "text-primary";
+  const latest = toasts[toasts.length - 1];
+  const Icon =
+    latest.type === "success"
+      ? CheckCircle2
+      : latest.type === "warning"
+      ? AlertTriangle
+      : latest.type === "error"
+      ? XCircle
+      : Info;
 
-        return (
-          <div
-            key={toast.id}
-            role="status"
-            className="pointer-events-auto bg-surface border border-border rounded-xl p-4 shadow-elevated flex items-start gap-3 transition-all duration-200"
-          >
-            <Icon className={cn("w-5 h-5 shrink-0 mt-0.5", iconColor)} />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-heading">{toast.title}</p>
-              {toast.description && (
-                <p className="text-xs text-muted mt-0.5 leading-relaxed">
-                  {toast.description}
-                </p>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => onDismiss(toast.id)}
-              aria-label="Dismiss notification"
-              className="text-muted hover:text-heading p-1 rounded-lg transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        );
-      })}
+  return (
+    <div className="toast no-print" role="status" aria-live="polite">
+      <Icon size={17} />
+      <span>
+        {latest.title}
+        {latest.description ? ` — ${latest.description}` : ""}
+      </span>
+      <button
+        type="button"
+        className="toast-close"
+        aria-label="Dismiss notification"
+        onClick={() => onDismiss(latest.id)}
+      >
+        <X size={15} />
+      </button>
     </div>
   );
 }
@@ -158,7 +134,7 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium rounded-xl border border-border text-heading hover:bg-sand/40 transition-colors"
+            className="button button-outline button-small"
           >
             {cancelLabel}
           </button>
@@ -166,10 +142,10 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             className={cn(
-              "px-4 py-2 text-sm font-semibold rounded-xl text-white transition-colors",
+              "button button-small",
               variant === "danger"
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-primary hover:bg-primary-dark"
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : "button-primary"
             )}
           >
             {confirmLabel}

@@ -1,26 +1,25 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-  User,
-  ArrowRight,
-  Globe2,
-  Sparkles,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Globe2, Sparkles } from "lucide-react";
 import { useRoamWise } from "@/context/RoamWiseContext";
-import { RoamWiseLogo } from "@/components/ui/BrandComponents";
+import { Brand } from "@/components/ui/BrandComponents";
 import { signupSchema } from "@/lib/validations";
 import { WORLDWIDE_CITIES_AND_HOMETOWNS } from "@/lib/destinations-catalog";
 
+const AUTH_DYNAMIC_PHOTOS = [
+  "/places/switzerland-lauterbrunnen.jpg",
+  "/places/kerala-backwaters.jpg",
+  "/places/santorini-oia-caldera.jpg",
+  "/places/paris-louvre-pyramid.jpg",
+  "/places/jaipur-hawa-mahal.jpg",
+  "/places/bali-uluwatu.jpg",
+];
+
 export default function SignupPage() {
   const router = useRouter();
-  const { signUp, activeDraft, updateActiveDraft, isAuthLoading } =
+  const { signUp, signIn, activeDraft, updateActiveDraft, isAuthLoading } =
     useRoamWise();
 
   const [name, setName] = useState("");
@@ -32,6 +31,7 @@ export default function SignupPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [redirectPath, setRedirectPath] = useState("/create-trip/destination");
   const [pendingDest, setPendingDest] = useState("");
+  const [slideIdx, setSlideIdx] = useState(0);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -41,6 +41,13 @@ export default function SignupPage() {
       if (redir) setRedirectPath(redir);
       if (dest) setPendingDest(dest);
     }
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlideIdx((prev) => (prev + 1) % AUTH_DYNAMIC_PHOTOS.length);
+    }, 4000);
+    return () => clearInterval(timer);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,242 +83,213 @@ export default function SignupPage() {
       updateActiveDraft({ startCity: homeCity.trim() });
     }
 
-    // If user already picked a destination on the dashboard, go straight to Step 2 (Dates), otherwise Step 1 (Destination)
-    if (activeDraft.destinationPlaceId && redirectPath === "/create-trip/destination") {
+    if (
+      activeDraft.destinationPlaceId &&
+      redirectPath === "/create-trip/destination"
+    ) {
       router.push("/create-trip/dates");
     } else {
       router.push(redirectPath || "/create-trip/destination");
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    const res = await signIn(
+      email.trim() || "traveler@roamwise.app",
+      name.trim() || "Traveler",
+      true
+    );
+    if (res.ok) {
+      router.push(redirectPath || "/dashboard");
+    }
+  };
+
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-background">
-      {/* Left Panel */}
-      <div className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1600&q=85')",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/40" />
-
-        <div className="relative z-10">
-          <RoamWiseLogo lightText size="lg" />
+    <div className="auth-page">
+      <aside
+        className="auth-photo"
+        style={{
+          backgroundImage: `linear-gradient(0deg,rgba(12,34,36,.74),rgba(12,34,36,.05)),url('${AUTH_DYNAMIC_PHOTOS[slideIdx]}')`,
+          transition: "background-image 0.9s ease-in-out",
+        }}
+      >
+        <button
+          type="button"
+          className="auth-back"
+          onClick={() => router.push("/")}
+        >
+          <ArrowLeft size={16} /> Back to RoamWise
+        </button>
+        <div className="auth-photo-caption">
+          <Brand light />
+          <span className="eyebrow eyebrow-light">
+            NOT EVERY JOURNEY LOOKS THE SAME
+          </span>
+          <h2>
+            Every great journey
+            <br />
+            begins with <em>a feeling.</em>
+          </h2>
+          <p>Let the planning feel a little more like the anticipation.</p>
         </div>
+      </aside>
 
-        <div className="relative z-10 max-w-lg text-white">
-          <p className="text-xs font-bold uppercase tracking-widest text-sand mb-3">
-            Start Your Travel Collection
+      <section className="auth-form-side">
+        <div className="auth-form-wrap">
+          <Brand />
+          <span className="eyebrow">MAKE SPACE FOR YOUR NEXT TRIP</span>
+          <h1>Let’s get you going.</h1>
+          <p className="auth-subtitle">
+            Create an account to keep your ideas in one place.
           </p>
-          <h1 className="text-4xl font-heading font-extrabold leading-tight">
-            &ldquo;Every great journey begins with a plan.&rdquo;
-          </h1>
-          <p className="text-base text-white/85 mt-4 leading-relaxed">
-            Create your personal RoamWise account to unlock step-by-step AI trip
-            planning, customize daily schedules, and download illustrated PDF
-            itineraries with photos of every place you&apos;ll visit.
-          </p>
-        </div>
-      </div>
 
-      {/* Right Panel */}
-      <div className="flex flex-col justify-center items-center p-6 sm:p-12 bg-surface">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden mb-8">
-            <RoamWiseLogo size="md" />
-          </div>
-
-          {(pendingDest || activeDraft.destinationName) && (
-            <div className="mb-4 p-3.5 rounded-2xl bg-primary/10 border border-primary/25 flex items-center gap-2.5 text-xs font-medium text-heading">
-              <Sparkles className="w-4 h-4 text-primary shrink-0" />
+          {pendingDest && (
+            <div className="demo-callout">
+              <Sparkles size={16} />
               <span>
-                Create your account to continue planning your trip to{" "}
-                <strong className="font-bold text-primary">
-                  {pendingDest || activeDraft.destinationName}
-                </strong>
-                .
+                <b>Destination selected: {pendingDest}.</b> Create your free
+                account to continue planning.
               </span>
             </div>
           )}
 
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold text-heading">
-            Create your RoamWise account
-          </h2>
-          <p className="text-sm text-muted mt-1.5">
-            Your profile details and itineraries are stored securely in our backend.
-          </p>
-
           {errorMsg && (
-            <div
-              role="alert"
-              className="mt-4 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs font-medium text-red-700 dark:text-red-300"
-            >
-              {errorMsg}
+            <div className="field-error" role="alert" style={{ marginBottom: 12 }}>
+              <span>{errorMsg}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div>
-              <label
-                htmlFor="signup-name"
-                className="block text-xs font-semibold text-heading mb-1.5"
-              >
-                Full Name
-              </label>
-              <div className="flex items-center gap-2.5 bg-background border border-border rounded-xl px-3.5 py-2.5 focus-within:border-primary">
-                <User className="w-4 h-4 text-muted shrink-0" />
+          <form onSubmit={handleSubmit} className="auth-form">
+            <label className="form-field">
+              <span>Full name</span>
+              <input
+                required
+                autoComplete="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+              />
+            </label>
+            <label className="form-field">
+              <span>Email address</span>
+              <input
+                required
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </label>
+            <label className="form-field">
+              <span>
+                Home city <small>For route & transit planning</small>
+              </span>
+              <input
+                value={homeCity}
+                onChange={(e) => setHomeCity(e.target.value)}
+                placeholder="e.g. New Delhi, Mumbai, London"
+                list="signup-home-city-list"
+              />
+              <datalist id="signup-home-city-list">
+                {WORLDWIDE_CITIES_AND_HOMETOWNS.map((c) => (
+                  <option key={c.placeId} value={c.name}>
+                    {c.stateOrCountry}
+                  </option>
+                ))}
+              </datalist>
+            </label>
+            <label className="form-field">
+              <span>
+                Password <small>At least 8 characters</small>
+              </span>
+              <div className="password-field">
                 <input
-                  id="signup-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your full name"
                   required
-                  className="bg-transparent text-sm text-heading focus:outline-none w-full"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="signup-email"
-                className="block text-xs font-semibold text-heading mb-1.5"
-              >
-                Email Address
-              </label>
-              <div className="flex items-center gap-2.5 bg-background border border-border rounded-xl px-3.5 py-2.5 focus-within:border-primary">
-                <Mail className="w-4 h-4 text-muted shrink-0" />
-                <input
-                  id="signup-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  className="bg-transparent text-sm text-heading focus:outline-none w-full"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="signup-hometown"
-                className="block text-xs font-semibold text-heading mb-1.5"
-              >
-                Your Hometown / Starting City
-              </label>
-              <div className="flex items-center gap-2.5 bg-background border border-border rounded-xl px-3.5 py-2.5 focus-within:border-primary">
-                <Globe2 className="w-4 h-4 text-muted shrink-0" />
-                <input
-                  id="signup-hometown"
-                  type="text"
-                  list="signup-hometown-options"
-                  value={homeCity}
-                  onChange={(e) => setHomeCity(e.target.value)}
-                  placeholder="e.g. New Delhi, Mumbai, Bengaluru, London..."
-                  required
-                  className="bg-transparent text-sm text-heading focus:outline-none w-full"
-                />
-                <datalist id="signup-hometown-options">
-                  {WORLDWIDE_CITIES_AND_HOMETOWNS.map((c) => (
-                    <option key={c.placeId} value={c.name}>
-                      {c.stateOrCountry}
-                    </option>
-                  ))}
-                </datalist>
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="signup-password"
-                className="block text-xs font-semibold text-heading mb-1.5"
-              >
-                Password (min 8 chars, 1 uppercase, 1 number)
-              </label>
-              <div className="flex items-center gap-2.5 bg-background border border-border rounded-xl px-3.5 py-2.5 focus-within:border-primary">
-                <Lock className="w-4 h-4 text-muted shrink-0" />
-                <input
-                  id="signup-password"
+                  minLength={8}
                   type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="e.g. Travel2026"
-                  required
-                  className="bg-transparent text-sm text-heading focus:outline-none w-full"
+                  placeholder="••••••••"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((s) => !s)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="text-muted hover:text-heading p-0.5"
+                  onClick={() => setShowPassword((value) => !value)}
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
+                  {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="signup-confirm"
-                className="block text-xs font-semibold text-heading mb-1.5"
-              >
-                Confirm Password
-              </label>
-              <div className="flex items-center gap-2.5 bg-background border border-border rounded-xl px-3.5 py-2.5 focus-within:border-primary">
-                <Lock className="w-4 h-4 text-muted shrink-0" />
+            </label>
+            <label className="form-field">
+              <span>Confirm password</span>
+              <div className="password-field">
                 <input
-                  id="signup-confirm"
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
                   required
-                  className="bg-transparent text-sm text-heading focus:outline-none w-full"
+                  minLength={8}
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="••••••••"
                 />
               </div>
-            </div>
+            </label>
 
             <button
+              className="button button-primary button-wide"
               type="submit"
               disabled={isAuthLoading}
-              className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-60 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors"
             >
-              <span>
-                {isAuthLoading
-                  ? "Saving Account & Opening Planner..."
-                  : "Create Account & Continue to Planner"}
-              </span>
-              <ArrowRight className="w-4 h-4" />
+              {isAuthLoading ? "Please wait…" : "Create account"}
+              <ArrowRight size={16} />
             </button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-muted">
+          <div className="auth-divider">
+            <span />
+            or
+            <span />
+          </div>
+          <button
+            type="button"
+            className="button button-outline button-wide"
+            onClick={handleGoogleSignUp}
+          >
+            <Globe2 size={16} /> Continue with Google
+          </button>
+
+          <div className="auth-demo-choice">
+            <span>Just exploring?</span>
+            <button type="button" onClick={() => router.push("/dashboard")}>
+              Explore workspace preview
+            </button>
+          </div>
+
+          <p className="auth-switch">
             Already have an account?{" "}
-            <Link
-              href={`/login?redirect=${encodeURIComponent(redirectPath)}${pendingDest ? `&dest=${encodeURIComponent(pendingDest)}` : ""}`}
-              className="font-semibold text-primary hover:underline"
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  `/login${
+                    redirectPath
+                      ? `?redirect=${encodeURIComponent(redirectPath)}`
+                      : ""
+                  }`
+                )
+              }
             >
-              Sign In
-            </Link>
+              Sign in
+            </button>
           </p>
 
-          <div className="mt-4 text-center">
-            <Link
-              href="/dashboard"
-              className="text-xs text-muted hover:text-heading"
-            >
-              ← Back to Dashboard Showcase
-            </Link>
+          <div className="auth-legal">
+            By continuing, you agree to our <a href="#terms">Terms</a> and{" "}
+            <a href="#privacy">Privacy Policy.</a>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

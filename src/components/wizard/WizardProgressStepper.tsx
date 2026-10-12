@@ -1,95 +1,114 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { Check, MapPin, Calendar, Sliders, Wallet, ClipboardCheck, Bookmark } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Bookmark, Check, Compass } from "lucide-react";
 import { useRoamWise } from "@/context/RoamWiseContext";
 
 const STEPS = [
-  { step: 1, label: "Destination", href: "/create-trip/destination", icon: MapPin },
-  { step: 2, label: "Dates", href: "/create-trip/dates", icon: Calendar },
-  { step: 3, label: "Preferences", href: "/create-trip/preferences", icon: Sliders },
-  { step: 4, label: "Budget", href: "/create-trip/budget", icon: Wallet },
-  { step: 5, label: "Review", href: "/create-trip/review", icon: ClipboardCheck },
+  {
+    step: 1,
+    label: "Destination",
+    href: "/create-trip/destination",
+    heading: "Where would you like to explore?",
+    subhead: "Start with a place, then make the plan your own.",
+  },
+  {
+    step: 2,
+    label: "Dates",
+    href: "/create-trip/dates",
+    heading: "When does your adventure begin?",
+    subhead: "A good itinerary starts with a comfortable amount of time.",
+  },
+  {
+    step: 3,
+    label: "Preferences",
+    href: "/create-trip/preferences",
+    heading: "What kind of traveler are you?",
+    subhead: "Tell us what you love so the days feel like yours.",
+  },
+  {
+    step: 4,
+    label: "Budget",
+    href: "/create-trip/budget",
+    heading: "Let’s make every rupee count.",
+    subhead: "A first estimate helps you know where the money may go.",
+  },
+  {
+    step: 5,
+    label: "Review",
+    href: "/create-trip/review",
+    heading: "Your adventure is almost ready!",
+    subhead: "Review your choices. You can still change any section.",
+  },
 ];
 
 export function WizardProgressStepper({ currentStep }: { currentStep: number }) {
+  const router = useRouter();
   const { activeDraft, saveDraftToContinueList } = useRoamWise();
+  const currentMeta = STEPS[currentStep - 1] || STEPS[0];
+  const prevStep = currentStep > 1 ? STEPS[currentStep - 2] : null;
 
   return (
-    <div className="mb-8">
-      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-soft flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <ol className="flex items-center justify-between md:justify-start gap-2 sm:gap-4 overflow-x-auto">
-          {STEPS.map((s, idx) => {
-            const Icon = s.icon;
-            const isCompleted = s.step < currentStep;
-            const isActive = s.step === currentStep;
-            const canNavigate =
-              s.step <= currentStep || Boolean(activeDraft.destinationPlaceId);
-
-            const content = (
-              <div className="flex items-center gap-2 shrink-0">
-                <div
-                  className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
-                    isCompleted
-                      ? "bg-success text-white"
-                      : isActive
-                      ? "bg-primary text-white ring-4 ring-primary/15"
-                      : "bg-background border border-border text-muted"
-                  )}
-                >
-                  {isCompleted ? <Check className="w-4 h-4" /> : <Icon className="w-3.5 h-3.5" />}
-                </div>
-                <span
-                  className={cn(
-                    "text-xs sm:text-sm font-semibold",
-                    isActive
-                      ? "text-heading"
-                      : isCompleted
-                      ? "text-success"
-                      : "text-muted"
-                  )}
-                >
-                  {s.label}
-                </span>
-              </div>
-            );
-
-            return (
-              <li key={s.step} className="flex items-center gap-2 sm:gap-4">
-                {canNavigate ? (
-                  <Link href={s.href} className="hover:opacity-85 transition-opacity">
-                    {content}
-                  </Link>
-                ) : (
-                  <div className="opacity-60 cursor-not-allowed">{content}</div>
-                )}
-                {idx < STEPS.length - 1 && (
-                  <div
-                    className={cn(
-                      "hidden sm:block w-8 h-0.5 rounded-full",
-                      isCompleted ? "bg-success" : "bg-border"
-                    )}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ol>
-
-        {activeDraft.destinationName && (
+    <>
+      <div className="wizard-top">
+        <div>
           <button
             type="button"
-            onClick={saveDraftToContinueList}
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-border bg-background hover:bg-sand/40 text-xs font-semibold text-heading transition-colors shrink-0"
+            className="back-link"
+            onClick={() =>
+              router.push(prevStep ? prevStep.href : "/dashboard")
+            }
           >
-            <Bookmark className="w-3.5 h-3.5 text-primary" />
-            <span>Save Draft</span>
+            <ArrowLeft size={15} />{" "}
+            {prevStep ? "Back" : "Back to dashboard"}
           </button>
-        )}
+          <span className="eyebrow">LET’S PLAN SOMETHING AMAZING</span>
+          <h1>{currentMeta.heading}</h1>
+          <p>{currentMeta.subhead}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {activeDraft.destinationName && (
+            <button
+              type="button"
+              onClick={saveDraftToContinueList}
+              className="button button-outline button-small"
+            >
+              <Bookmark size={13} />
+              <span>Save draft</span>
+            </button>
+          )}
+          <span className="wizard-side-note">
+            YOUR TRIP, YOUR PACE <Compass size={21} />
+          </span>
+        </div>
       </div>
-    </div>
+
+      <div className="stepper" aria-label="Trip planning progress">
+        {STEPS.map((s, idx) => {
+          const isCompleted = s.step < currentStep;
+          const isCurrent = s.step === currentStep;
+          const canNavigate =
+            s.step <= currentStep || Boolean(activeDraft.destinationPlaceId);
+
+          return (
+            <button
+              key={s.label}
+              type="button"
+              className={`stepper-item ${isCurrent ? "current" : ""} ${
+                isCompleted ? "completed" : ""
+              }`}
+              disabled={!canNavigate}
+              onClick={() => canNavigate && router.push(s.href)}
+            >
+              <span className="stepper-dot">
+                {isCompleted ? <Check size={13} /> : `0${idx + 1}`}
+              </span>
+              <span>{s.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }

@@ -163,10 +163,10 @@ export async function GET(req: NextRequest) {
           ? `Sacred shrines, darshan corridors, and spiritual peace in ${c.name}.`
           : `Iconic landmarks, local neighborhoods, and curated routes in ${c.name}.`,
         heroImage: isSacred
-          ? "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80"
+          ? "/places/varanasi-ghat.jpg"
           : c.regionType === "Indian City"
-          ? "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=1200&q=80"
-          : "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80",
+          ? "/places/jaipur-hawa-mahal.jpg"
+          : "/places/tokyo-sensoji.jpg",
         lat: c.lat,
         lng: c.lng,
         regionType: c.regionType,
@@ -281,8 +281,8 @@ export async function GET(req: NextRequest) {
                     ? `Sacred darshan, spiritual heritage, and local rituals in ${name}.`
                     : `Explore ${name}'s top attractions, cultural heritage, and dining routes.`,
                   heroImage: looksSacred
-                    ? "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80"
-                    : "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80",
+                    ? "/places/varanasi-ghat.jpg"
+                    : "/places/jaipur-hawa-mahal.jpg",
                   lat: Number(item.lat) || 28.6139,
                   lng: Number(item.lon) || 77.209,
                   regionType: looksSacred ? "Sacred & Holy Place" : "Global City",
@@ -321,8 +321,8 @@ export async function GET(req: NextRequest) {
           ? `Sacred darshan timings, temple heritage, and sattvic dining in ${formattedName}.`
           : `Explore ${formattedName}'s top attractions, local dining, and scenic routes.`,
         heroImage: looksSacred
-          ? "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80"
-          : "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80",
+          ? "/places/varanasi-ghat.jpg"
+          : "/places/jaipur-hawa-mahal.jpg",
         lat: 28.6139,
         lng: 77.209,
         regionType: looksSacred ? "Sacred & Holy Place" : "Global City",

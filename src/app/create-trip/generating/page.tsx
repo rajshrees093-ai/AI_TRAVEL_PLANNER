@@ -4,14 +4,13 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Compass,
-  Sparkles,
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
   ArrowLeft,
 } from "lucide-react";
+import { DashboardWorkspaceLayout } from "@/components/layout/DashboardWorkspaceLayout";
 import { useRoamWise } from "@/context/RoamWiseContext";
-import { cn } from "@/lib/utils";
 
 const GENERATION_STEPS = [
   "Discovering amazing places...",
@@ -35,7 +34,6 @@ export default function GeneratingItineraryPage() {
     setErrorState(null);
     setActiveStepIdx(0);
 
-    // Step progression timer for visual step milestones (no fake percentages)
     const stepTimer = setInterval(() => {
       setActiveStepIdx((prev) =>
         prev < GENERATION_STEPS.length - 1 ? prev + 1 : prev
@@ -95,7 +93,6 @@ export default function GeneratingItineraryPage() {
 
       setJobId(data.jobId);
 
-      // Poll /api/trips/generate/[jobId] to verify server job completion
       if (data.jobId) {
         const pollRes = await fetch(`/api/trips/generate/${data.jobId}`);
         if (pollRes.ok) {
@@ -110,7 +107,6 @@ export default function GeneratingItineraryPage() {
         }
       }
 
-      // Allow step sequence to complete smoothly then redirect to generated trip
       setTimeout(async () => {
         clearInterval(stepTimer);
         setActiveStepIdx(GENERATION_STEPS.length - 1);
@@ -139,101 +135,83 @@ export default function GeneratingItineraryPage() {
   }, [runGeneration]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <div className="bg-surface border border-border rounded-3xl max-w-xl w-full p-8 sm:p-10 shadow-elevated text-center">
+    <DashboardWorkspaceLayout
+      title="Generating Your Itinerary"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Generating Trip" },
+      ]}
+    >
+      <div className="generating-view">
         {!errorState ? (
           <>
-            {/* Animated Compass & Pulsing AI Indicator */}
-            <div className="relative w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full bg-primary/15 animate-ping" />
-              <div className="relative w-20 h-20 rounded-2xl bg-primary text-white flex items-center justify-center shadow-elevated">
-                <Compass className="w-10 h-10 animate-spin" style={{ animationDuration: "6s" }} />
-                <span className="absolute -top-1.5 -right-1.5 w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center shadow-sm">
-                  <Sparkles className="w-3.5 h-3.5" />
-                </span>
+            <div className="generating-orbit">
+              <div className="orbit-ring" />
+              <div className="orbit-compass">
+                <Compass className="w-7 h-7" />
               </div>
+              <div className="orbit-dot" />
             </div>
 
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sand text-heading text-xs font-semibold mb-3">
-              <span>Crafting {activeDraft.destinationName || "Your"} Journey</span>
-              {jobId && (
-                <code className="font-mono text-[10px] text-primary">
-                  • {jobId}
-                </code>
-              )}
+            <span className="eyebrow">
+              Crafting {activeDraft.destinationName || "Your"} Journey
+              {jobId ? ` • ${jobId}` : ""}
             </span>
-
-            <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-heading">
-              {GENERATION_STEPS[activeStepIdx]}
-            </h1>
-            <p className="text-sm text-muted mt-2">
+            <h1>{GENERATION_STEPS[activeStepIdx]}</h1>
+            <p>
               Matching verified places, dining preferences, and route distances
               for your {activeDraft.durationDays}-day{" "}
               {activeDraft.travelType.toLowerCase()} trip.
             </p>
 
-            {/* Step-based Progress List (No Fake Percentages) */}
-            <div className="mt-8 text-left space-y-2.5 bg-background border border-border rounded-2xl p-5">
+            <div className="generating-steps">
               {GENERATION_STEPS.map((msg, idx) => {
                 const isDone = idx < activeStepIdx;
                 const isCurrent = idx === activeStepIdx;
                 return (
                   <div
                     key={msg}
-                    className={cn(
-                      "flex items-center gap-3 text-xs sm:text-sm transition-opacity",
-                      isDone
-                        ? "text-success font-medium"
-                        : isCurrent
-                        ? "text-heading font-bold"
-                        : "text-muted opacity-50"
-                    )}
+                    className={`generating-step ${
+                      isDone ? "done" : isCurrent ? "active" : ""
+                    }`}
                   >
-                    {isDone ? (
-                      <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
-                    ) : isCurrent ? (
-                      <span className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin shrink-0" />
-                    ) : (
-                      <span className="w-4 h-4 rounded-full border border-border shrink-0" />
-                    )}
-                    <span>{msg}</span>
+                    <span>
+                      {isDone ? (
+                        <CheckCircle2 className="w-4 h-4" />
+                      ) : (
+                        idx + 1
+                      )}
+                    </span>
+                    <p>{msg}</p>
                   </div>
                 );
               })}
             </div>
           </>
         ) : (
-          <div className="py-4">
-            <div className="w-16 h-16 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8" />
-            </div>
-            <h2 className="text-2xl font-heading font-bold text-heading">
-              We hit a snag generating your trip
-            </h2>
-            <p className="text-sm text-muted mt-2 max-w-md mx-auto">
-              {errorState}
-            </p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <div className="empty-panel">
+            <AlertTriangle className="w-8 h-8" style={{ color: "var(--danger)", margin: "0 auto" }} />
+            <h3>We hit a snag generating your trip</h3>
+            <p>{errorState}</p>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginTop: "10px" }}>
               <button
                 type="button"
+                className="button button-quiet"
                 onClick={() => router.push("/create-trip/review")}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-medium text-heading hover:bg-sand/40"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Review</span>
+                <ArrowLeft className="w-4 h-4" /> Back to Review
               </button>
               <button
                 type="button"
+                className="button button-primary"
                 onClick={runGeneration}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold"
               >
-                <RefreshCw className="w-4 h-4" />
-                <span>Retry Generation</span>
+                <RefreshCw className="w-4 h-4" /> Retry Generation
               </button>
             </div>
           </div>
         )}
       </div>
-    </div>
+    </DashboardWorkspaceLayout>
   );
 }

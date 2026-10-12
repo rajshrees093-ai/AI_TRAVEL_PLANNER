@@ -13,8 +13,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Ancient Ganges ghats, Kashi Vishwanath Jyotirlinga, and divine evening Ganga Aarti.",
     description:
       "One of the world's oldest living cities, revered for Shri Kashi Vishwanath Corridor, 84 sacred river ghats, and Buddhist heritage at nearby Sarnath.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Dasaswamedh_ghat-varanasi_india-andres_larin.jpg/1200px-Dasaswamedh_ghat-varanasi_india-andres_larin.jpg",
+    heroImage: "/places/varanasi-ghat.jpg",
     lat: 25.3176,
     lng: 83.0062,
     defaultCurrency: "INR",
@@ -35,8 +34,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Shri Ram Janmabhoomi Mandir, Hanuman Garhi, and tranquil Saryu River ghats.",
     description:
       "The sacred birthplace of Lord Rama on the banks of the Saryu River, featuring the grand Nagara-style Shri Ram Janmabhoomi Mandir and ancient shrines.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Shri_Ram_Janambhoomi_Mandir%2C_Ayodhya_Dham.jpg/1200px-Shri_Ram_Janambhoomi_Mandir%2C_Ayodhya_Dham.jpg",
+    heroImage: "/places/ayodhya-ram-mandir.jpg",
     lat: 26.7922,
     lng: 82.1998,
     defaultCurrency: "INR",
@@ -57,8 +55,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Sri Venkateswara Swamy Temple atop the seven sacred Seshachalam Hills.",
     description:
       "Home to the world-renowned Tirumala Venkateswara Temple, Padmavathi Ammavari Temple, sacred waterfalls, and centuries-old Dravidian architecture.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Tirumala_090615.jpg/1200px-Tirumala_090615.jpg",
+    heroImage: "/places/tirupati-temple.jpg",
     lat: 13.6288,
     lng: 79.4192,
     defaultCurrency: "INR",
@@ -79,8 +76,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Sri Harmandir Sahib, Amrit Sarovar, community Langar, and historic heritage.",
     description:
       "The spiritual heart of Sikhism centered around the gleaming gold-leaf Sri Harmandir Sahib, welcoming travelers of all faiths with peace and warm hospitality.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/The_Golden_Temple_of_Amrithsar_7.jpg/1200px-The_Golden_Temple_of_Amrithsar_7.jpg",
+    heroImage: "/places/amritsar-golden-temple.jpg",
     lat: 31.62,
     lng: 74.8765,
     defaultCurrency: "INR",
@@ -101,8 +97,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "High-altitude Himalayan Jyotirlinga and Badri Vishal shrine amidst snow peaks.",
     description:
       "Revered Himalayan pilgrimage across the Garhwal mountains uniting Kedarnath Jyotirlinga at 3,583m and Badrinath Temple along the Alaknanda River.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Kedarnath_Temple_in_Rainy_season.jpg/1200px-Kedarnath_Temple_in_Rainy_season.jpg",
+    heroImage: "/places/kedarnath-temple.jpg",
     lat: 30.7352,
     lng: 79.0669,
     defaultCurrency: "INR",
@@ -123,8 +118,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Sacred Trikuta Mountain cave shrine of Mata Vaishno Devi.",
     description:
       "One of India's most revered shakti pilgrimages starting from Katra base camp up the scenic 13 km paved mountain trail to the Holy Bhawan and Bhairon Ghati.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Badrinath_Temple_%2C_Uttarakhand.jpg/1200px-Badrinath_Temple_%2C_Uttarakhand.jpg",
+    heroImage: "/places/vaishno-devi-katra.jpg",
     lat: 33.0308,
     lng: 74.949,
     defaultCurrency: "INR",
@@ -145,8 +139,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Shree Jagannath Char Dham Temple, Mahaprasad, and the Konark Sun Temple.",
     description:
       "Home to the 12th-century Shree Jagannath Temple on the Bay of Bengal coast and the UNESCO World Heritage Konark Sun Temple.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Shri_Jagannath_temple.jpg/1200px-Shri_Jagannath_temple.jpg",
+    heroImage: "/places/puri-jagannath.jpg",
     lat: 19.8049,
     lng: 85.8179,
     defaultCurrency: "INR",
@@ -167,8 +160,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Shri Krishna Janmasthan, Banke Bihari Temple, Prem Mandir, and Yamuna ghats.",
     description:
       "The sacred Braj Bhoomi twin towns celebrating the life of Lord Krishna through centuries-old temples, devotional kirtans, and illuminated marble shrines.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/PremMandirSideViewFromCanteen.jpg/1200px-PremMandirSideViewFromCanteen.jpg",
+    heroImage: "/places/prem-mandir-vrindavan.jpg",
     lat: 27.565,
     lng: 77.6593,
     defaultCurrency: "INR",
@@ -189,8 +181,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Mahakaleshwar Jyotirlinga, Mahakal Lok Corridor, and Narmada island shrine.",
     description:
       "Connects two sacred Jyotirlingas in Madhya Pradesh: Mahakaleshwar on the Kshipra River in Ujjain and Omkareshwar on the Narmada River.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Mahakaleshwar_Temple%2C_Ujjain.jpg/1200px-Mahakaleshwar_Temple%2C_Ujjain.jpg",
+    heroImage: "/places/ujjain-mahakaleshwar.jpg",
     lat: 23.1828,
     lng: 75.7682,
     defaultCurrency: "INR",
@@ -211,8 +202,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Dwarkadhish Jagat Mandir, Nageshwar, and oceanfront Somnath Jyotirlinga.",
     description:
       "A revered coastal Gujarat pilgrimage linking Lord Krishna's ancient kingdom of Dwarka with the first Jyotirlinga at Somnath overlooking the Arabian Sea.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Somanath_mandir_%28cropped%29.jpg/1200px-Somanath_mandir_%28cropped%29.jpg",
+    heroImage: "/places/somnath-temple.jpg",
     lat: 22.2376,
     lng: 68.9674,
     defaultCurrency: "INR",
@@ -233,8 +223,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Ramanathaswamy Jyotirlinga corridors, Dhanushkodi, and Meenakshi Amman gopurams.",
     description:
       "Explore South India's grandest temple architecture across Madurai's towering Meenakshi Amman gopurams and Rameswaram Island's sacred 22 theerthams.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/An_aerial_view_of_Madurai_city_from_atop_of_Meenakshi_Amman_temple.jpg/1200px-An_aerial_view_of_Madurai_city_from_atop_of_Meenakshi_Amman_temple.jpg",
+    heroImage: "/places/madurai-meenakshi.jpg",
     lat: 9.2876,
     lng: 79.3129,
     defaultCurrency: "INR",
@@ -255,8 +244,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Shri Sai Baba Samadhi Mandir, Dwarkamai, and Trimbakeshwar Jyotirlinga.",
     description:
       "Combines the peaceful Sai Baba shrine at Shirdi with Shani Shingnapur and the sacred Godavari-origin Trimbakeshwar Jyotirlinga in Nashik.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Trimbakeshwar_Temple-Nashik-Maharashtra-1.jpg/1200px-Trimbakeshwar_Temple-Nashik-Maharashtra-1.jpg",
+    heroImage: "/places/trimbakeshwar-temple.jpg",
     lat: 19.7645,
     lng: 74.4762,
     defaultCurrency: "INR",
@@ -277,8 +265,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "UNESCO Mahabodhi Temple, Sacred Bodhi Tree, and international monasteries.",
     description:
       "Where Gautama Buddha attained enlightenment beneath the Bodhi Tree, surrounded by serene Tibetan, Thai, and Japanese temples plus ancient Nalanda.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Mahabodhitemple.jpg/1200px-Mahabodhitemple.jpg",
+    heroImage: "/places/bodh-gaya-mahabodhi.jpg",
     lat: 24.6961,
     lng: 84.987,
     defaultCurrency: "INR",
@@ -299,8 +286,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Khwaja Gharib Nawaz Dargah, Pushkar Brahma Temple, and sacred lake ghats.",
     description:
       "Twin spiritual towns separated by the Nag Pahar hills: Sufi devotion and qawwalis at Ajmer Sharif alongside Pushkar's rare Jagatpita Brahma Temple.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Evening_lights_by_the_Pushkar_Lake%2C_Pushkar.jpg/1200px-Evening_lights_by_the_Pushkar_Lake%2C_Pushkar.jpg",
+    heroImage: "/places/pushkar-lake.jpg",
     lat: 26.4499,
     lng: 74.6399,
     defaultCurrency: "INR",
@@ -321,8 +307,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Har Ki Pauri Ganga Aarti, Mansa Devi, and Chandi Devi hilltop temples.",
     description:
       "Gateway to the Gods (Hari ka Dwar) where the sacred Ganges enters the Indo-Gangetic plains, famous for twilight lamps on Har Ki Pauri.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Evening_view_of_Har-ki-Pauri%2C_Haridwar.jpg/1200px-Evening_view_of_Har-ki-Pauri%2C_Haridwar.jpg",
+    heroImage: "/places/haridwar-har-ki-pauri.jpg",
     lat: 29.9457,
     lng: 78.1642,
     defaultCurrency: "INR",
@@ -343,8 +328,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Sacred confluence of the Ganga, Yamuna, and mythical Saraswati rivers.",
     description:
       "Revered Tirtharaj (King of Pilgrimages) hosting the Triveni Sangam boat dip, Bade Hanuman Mandir, Akshayavat, and Kumbh Mela grounds.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/NorthIndiaCircuit_250.jpg/1200px-NorthIndiaCircuit_250.jpg",
+    heroImage: "/places/prayagraj-sangam.jpg",
     lat: 25.4358,
     lng: 81.8463,
     defaultCurrency: "INR",
@@ -365,8 +349,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Nilachal Hill Shakti Peeth, Umananda Peacock Island Temple, and Brahmaputra views.",
     description:
       "Home to one of the oldest and most revered 51 Shakti Peethas atop Nilachal Hill overlooking the mighty Brahmaputra River.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Kamakhya_Temple_-_DEV_8829.jpg/1200px-Kamakhya_Temple_-_DEV_8829.jpg",
+    heroImage: "/places/kamakhya-temple.jpg",
     lat: 26.1664,
     lng: 91.7055,
     defaultCurrency: "INR",
@@ -387,8 +370,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Masjid al-Haram, the Holy Kaaba, and Al-Masjid an-Nabawi.",
     description:
       "The two holiest cities in Islam, connected by the Haramain High-Speed Railway for Umrah and Ziyarah pilgrims from around the globe.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Edited_Great_Mosque_of_Mecca1_5-2019-ccsa4.0_%28cropped%29.jpg/1200px-Edited_Great_Mosque_of_Mecca1_5-2019-ccsa4.0_%28cropped%29.jpg",
+    heroImage: "/places/mecca-masjid-al-haram.jpg",
     lat: 21.4225,
     lng: 39.8262,
     defaultCurrency: "USD",
@@ -409,8 +391,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "St. Peter's Basilica, Sistine Chapel, and the Papal Basilicas of Rome.",
     description:
       "The spiritual and artistic center of the Catholic Church, featuring Michelangelo's Pietà, St. Peter's Square, and ancient Roman basilicas.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg/1200px-Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg",
+    heroImage: "/places/vatican-st-peters.jpg",
     lat: 41.9029,
     lng: 12.4534,
     defaultCurrency: "EUR",
@@ -431,8 +412,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Western Wall, Church of the Holy Sepulchre, and Temple Mount / Haram al-Sharif.",
     description:
       "Sacred to Judaism, Christianity, and Islam, enclosed within historic limestone walls containing millennia of spiritual heritage.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/2014-06_East_Jerusalem_090_%2814936890061%29.jpg/1200px-2014-06_East_Jerusalem_090_%2814936890061%29.jpg",
+    heroImage: "/places/jerusalem-old-city.jpg",
     lat: 31.7767,
     lng: 35.2345,
     defaultCurrency: "USD",
@@ -453,8 +433,7 @@ export const SACRED_DESTINATIONS: DestinationInfo[] = [
     tagline: "Sacred Pashupatinath Temple on the Bagmati River, Boudhanath, and Swayambhunath.",
     description:
       "Unites the revered Hindu shrine of Lord Pashupatinath with UNESCO Buddhist stupas in the Himalayan Kathmandu Valley.",
-    heroImage:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Pashupatinath_Temple-2020.jpg/1200px-Pashupatinath_Temple-2020.jpg",
+    heroImage: "/places/pashupatinath-temple.jpg",
     lat: 27.7104,
     lng: 85.3488,
     defaultCurrency: "INR",
@@ -491,8 +470,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "Free",
     estimatedCostINR: 0,
     recommendedDurationMins: 120,
-    photoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/f/ff/Kashi_Vishwanath.jpg",
+    photoUrl: "/places/kashi-vishwanath.jpg",
     isOutdoor: false,
     whyVisit: "Sacred golden-spired Jyotirlinga with seamless riverfront corridor access.",
   },
@@ -514,8 +492,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "Free",
     estimatedCostINR: 300,
     recommendedDurationMins: 95,
-    photoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Dasaswamedh_ghat-varanasi_india-andres_larin.jpg/1200px-Dasaswamedh_ghat-varanasi_india-andres_larin.jpg",
+    photoUrl: "/places/varanasi-ghat.jpg",
     isOutdoor: true,
   },
   {
@@ -536,8 +513,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "$",
     estimatedCostINR: 100,
     recommendedDurationMins: 120,
-    photoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Ancient_Buddhist_monasteries_near_Dhamekh_Stupa_Monument_Site%2C_Sarnath.jpg/1200px-Ancient_Buddhist_monasteries_near_Dhamekh_Stupa_Monument_Site%2C_Sarnath.jpg",
+    photoUrl: "/places/sarnath-stupa.jpg",
     isOutdoor: true,
   },
   {
@@ -558,8 +534,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "$",
     estimatedCostINR: 350,
     recommendedDurationMins: 60,
-    photoUrl:
-      "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=900&q=80",
+    photoUrl: "/places/indian-thali-cuisine.jpg",
     dietarySupported: ["Vegetarian", "Vegan"],
     cuisine: "Pure Vegetarian Banarasi & Sattvic",
   },
@@ -583,8 +558,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "Free",
     estimatedCostINR: 0,
     recommendedDurationMins: 140,
-    photoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Shri_Ram_Janambhoomi_Mandir%2C_Ayodhya_Dham.jpg/1200px-Shri_Ram_Janambhoomi_Mandir%2C_Ayodhya_Dham.jpg",
+    photoUrl: "/places/ayodhya-ram-mandir.jpg",
     isOutdoor: false,
     whyVisit: "Sacred centerpiece of Ayodhya with free locker facilities and pilgrim pathways.",
   },
@@ -606,8 +580,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "Free",
     estimatedCostINR: 0,
     recommendedDurationMins: 95,
-    photoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Hanuman_Garhi_Temple%2C_a_major_religious_site_in_Ayodhya_utter_pradesh.jpg/1200px-Hanuman_Garhi_Temple%2C_a_major_religious_site_in_Ayodhya_utter_pradesh.jpg",
+    photoUrl: "/places/hanuman-garhi.jpg",
     isOutdoor: true,
   },
   {
@@ -628,8 +601,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "Free",
     estimatedCostINR: 0,
     recommendedDurationMins: 90,
-    photoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Dasaswamedh_ghat-varanasi_india-andres_larin.jpg/1200px-Dasaswamedh_ghat-varanasi_india-andres_larin.jpg",
+    photoUrl: "/places/saryu-ghat-ayodhya.jpg",
     isOutdoor: true,
   },
   {
@@ -650,8 +622,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "$",
     estimatedCostINR: 380,
     recommendedDurationMins: 65,
-    photoUrl:
-      "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=900&q=80",
+    photoUrl: "/places/indian-thali-cuisine.jpg",
     dietarySupported: ["Vegetarian", "Vegan"],
     cuisine: "Pure Vegetarian Sattvic",
   },
@@ -675,8 +646,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "Free",
     estimatedCostINR: 0,
     recommendedDurationMins: 150,
-    photoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/The_Golden_Temple_of_Amrithsar_7.jpg/1200px-The_Golden_Temple_of_Amrithsar_7.jpg",
+    photoUrl: "/places/amritsar-golden-temple.jpg",
     isOutdoor: true,
     whyVisit: "Unmatched spiritual serenity at dawn and golden reflection across the sarovar at night.",
   },
@@ -698,8 +668,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "Free",
     estimatedCostINR: 0,
     recommendedDurationMins: 90,
-    photoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Jallianwala_Bagh%2C_Amritsar_01.jpg/1200px-Jallianwala_Bagh%2C_Amritsar_01.jpg",
+    photoUrl: "/places/jallianwala-bagh.jpg",
     isOutdoor: true,
   },
   {
@@ -720,8 +689,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "Free",
     estimatedCostINR: 0,
     recommendedDurationMins: 120,
-    photoUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/c/c4/The_SAARC_Car_Rally_2007_being_welcomed_by_traditional_Drummers_at_the_Wagah_Border_on_March_28%2C_2007.jpg",
+    photoUrl: "/places/wagah-border.jpg",
     isOutdoor: true,
   },
   {
@@ -742,8 +710,7 @@ export const SACRED_VERIFIED_PLACES: VerifiedPlace[] = [
     priceLevel: "$",
     estimatedCostINR: 450,
     recommendedDurationMins: 75,
-    photoUrl:
-      "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=900&q=80",
+    photoUrl: "/places/indian-thali-cuisine.jpg",
     dietarySupported: ["Vegetarian"],
     cuisine: "Pure Vegetarian Amritsari",
   },
@@ -929,115 +896,111 @@ const SACRED_SECONDARY_LANDMARKS: Record<
 > = {
   tirupati: {
     secondName: "Sri Padmavathi Ammavari Temple, Tiruchanur",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Tirumala_090615.jpg/1200px-Tirumala_090615.jpg",
-    thirdName: "Silathoranam & Akasa Ganga Sacred Waterfall",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Ramanathaswamy_temple7.JPG/1200px-Ramanathaswamy_temple7.JPG",
+    secondPhoto: "/places/tirupati-padmavathi.jpg",
+    thirdName: "Tirumala Seven Hills & Silathoranam Arch",
+    thirdPhoto: "/places/tirupati-hills.jpg",
   },
   "kedarnath-badrinath": {
     secondName: "Shri Badrinath Dham Temple & Tapt Kund",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Badrinath_Temple_%2C_Uttarakhand.jpg/1200px-Badrinath_Temple_%2C_Uttarakhand.jpg",
+    secondPhoto: "/places/badrinath-temple.jpg",
     thirdName: "Mana Village & Alaknanda–Saraswati Confluence",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Kedarnath_Temple_in_Rainy_season.jpg/1200px-Kedarnath_Temple_in_Rainy_season.jpg",
+    thirdPhoto: "/places/mana-village-badrinath.jpg",
+  },
+  "vaishno-devi": {
+    secondName: "Trikuta Mountain Trail & Ardhkuwari Shrine",
+    secondPhoto: "/places/vaishno-devi-katra.jpg",
+    thirdName: "Bhairon Ghati & Himalayan Panorama",
+    thirdPhoto: "/places/vaishno-devi-katra.jpg",
   },
   puri: {
     secondName: "Konark Sun Temple UNESCO Chariot Monument",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Konarka_Temple.jpg/1200px-Konarka_Temple.jpg",
+    secondPhoto: "/places/konark-sun-temple.jpg",
     thirdName: "Puri Golden Beach & Gundicha Mandir",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Shri_Jagannath_temple.jpg/1200px-Shri_Jagannath_temple.jpg",
+    thirdPhoto: "/places/puri-golden-beach.jpg",
   },
   "mathura-vrindavan": {
-    secondName: "Shri Banke Bihari Mandir & Nidhivan",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/PremMandirSideViewFromCanteen.jpg/1200px-PremMandirSideViewFromCanteen.jpg",
-    thirdName: "Vishram Ghat Yamuna Evening Aarti, Mathura",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Evening_view_of_Har-ki-Pauri%2C_Haridwar.jpg/1200px-Evening_view_of_Har-ki-Pauri%2C_Haridwar.jpg",
+    secondName: "Shri Krishna Janmasthan Mandir, Mathura",
+    secondPhoto: "/places/mathura-krishna-janmasthan.jpg",
+    thirdName: "Kusum Sarovar & Govardhan Parikrama",
+    thirdPhoto: "/places/govardhan-kusum-sarovar.jpg",
   },
   ujjain: {
-    secondName: "Shri Mahakal Lok Corridor & Rudra Sagar",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Mahakaleshwar_Temple%2C_Ujjain.jpg/1200px-Mahakaleshwar_Temple%2C_Ujjain.jpg",
+    secondName: "Omkareshwar Island Jyotirlinga on Narmada",
+    secondPhoto: "/places/omkareshwar-temple.jpg",
     thirdName: "Ram Ghat Kshipra Aarti & Kal Bhairav Mandir",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Evening_view_of_Har-ki-Pauri%2C_Haridwar.jpg/1200px-Evening_view_of_Har-ki-Pauri%2C_Haridwar.jpg",
+    thirdPhoto: "/places/ujjain-ram-ghat.jpg",
   },
   "dwarka-somnath": {
     secondName: "Shree Dwarkadhish Jagat Mandir & Gomti Ghat",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Dwarakadheesh_Temple%2C_2014.jpg/1200px-Dwarakadheesh_Temple%2C_2014.jpg",
-    thirdName: "Somnath Oceanfront Promenade & Nageshwar Jyotirlinga",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Somanath_mandir_%28cropped%29.jpg/1200px-Somanath_mandir_%28cropped%29.jpg",
+    secondPhoto: "/places/dwarkadhish-temple.jpg",
+    thirdName: "Nageshwar Jyotirlinga & Bet Dwarka",
+    thirdPhoto: "/places/nageshwar-jyotirlinga.jpg",
   },
   "rameswaram-madurai": {
     secondName: "Sri Ramanathaswamy Jyotirlinga 1,000-Pillar Corridor",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Ramanathaswamy_temple7.JPG/1200px-Ramanathaswamy_temple7.JPG",
+    secondPhoto: "/places/rameswaram-temple.jpg",
     thirdName: "Pamban Sea Bridge & Dhanushkodi Confluence",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/d/d4/Pamban_Bridge_Train_Passing.jpg",
+    thirdPhoto: "/places/pamban-bridge.jpg",
   },
   shirdi: {
     secondName: "Shri Sai Baba Samadhi Mandir & Dwarkamai",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/d/df/Shirdi_Sai_Baba_3.jpg",
-    thirdName: "Trimbakeshwar Jyotirlinga & Brahmagiri Hills",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Trimbakeshwar_Temple-Nashik-Maharashtra-1.jpg/1200px-Trimbakeshwar_Temple-Nashik-Maharashtra-1.jpg",
+    secondPhoto: "/places/shirdi-temple.jpg",
+    thirdName: "Shani Shingnapur & Godavari Ramkund",
+    thirdPhoto: "/places/shani-shingnapur.jpg",
   },
   "bodh-gaya": {
-    secondName: "Sacred Bodhi Tree & Vajrasana Meditation Park",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Mahabodhitemple.jpg/1200px-Mahabodhitemple.jpg",
-    thirdName: "Dhamek & Vishwa Shanti Stupa Rajgir",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Ancient_Buddhist_monasteries_near_Dhamekh_Stupa_Monument_Site%2C_Sarnath.jpg/1200px-Ancient_Buddhist_monasteries_near_Dhamekh_Stupa_Monument_Site%2C_Sarnath.jpg",
+    secondName: "Vishwa Shanti Stupa & Ratnagiri Hill, Rajgir",
+    secondPhoto: "/places/rajgir-shanti-stupa.jpg",
+    thirdName: "Dhamek Stupa & Buddhist Monasteries",
+    thirdPhoto: "/places/sarnath-stupa.jpg",
   },
   "ajmer-pushkar": {
     secondName: "Ajmer Sharif Dargah Khwaja Gharib Nawaz",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Dargah_of_Sufi_saint_Moinuddin_Chishti_Ajmer_India_%285%29.JPG/1200px-Dargah_of_Sufi_saint_Moinuddin_Chishti_Ajmer_India_%285%29.JPG",
-    thirdName: "Pushkar Lake 52 Ghats & Jagatpita Brahma Mandir",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Evening_lights_by_the_Pushkar_Lake%2C_Pushkar.jpg/1200px-Evening_lights_by_the_Pushkar_Lake%2C_Pushkar.jpg",
+    secondPhoto: "/places/ajmer-dargah.jpg",
+    thirdName: "Ana Sagar Marble Pavilions, Ajmer",
+    thirdPhoto: "/places/ana-sagar-ajmer.jpg",
   },
   haridwar: {
-    secondName: "Har Ki Pauri Evening Ganga Aarti",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Evening_view_of_Har-ki-Pauri%2C_Haridwar.jpg/1200px-Evening_view_of_Har-ki-Pauri%2C_Haridwar.jpg",
-    thirdName: "Mansa Devi & Chandi Devi Ropeway Darshan",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Rishikesh-Lakshman_Jhula_by_Kaustubh_Nayyar.jpg/1200px-Rishikesh-Lakshman_Jhula_by_Kaustubh_Nayyar.jpg",
+    secondName: "Mansa Devi & Chandi Devi Ropeway Shrines",
+    secondPhoto: "/places/haridwar-mansa-devi.jpg",
+    thirdName: "Lakshman Jhula & Rishikesh Ganga Foothills",
+    thirdPhoto: "/places/rishikesh-lakshman-jhula.jpg",
+  },
+  prayagraj: {
+    secondName: "Akbar Fort & Akshayavat Sacred Corridor",
+    secondPhoto: "/places/prayagraj-fort.jpg",
+    thirdName: "Khusro Bagh & Bade Hanuman Mandir",
+    thirdPhoto: "/places/prayagraj-khusro-bagh.jpg",
+  },
+  "guwahati-kamakhya": {
+    secondName: "Umananda Peacock Island Temple on Brahmaputra",
+    secondPhoto: "/places/umananda-temple-guwahati.jpg",
+    thirdName: "Saraighat & Mighty Brahmaputra Riverfront",
+    thirdPhoto: "/places/brahmaputra-river-assam.jpg",
   },
   "mecca-medina": {
     secondName: "Al-Masjid an-Nabawi (The Prophet's Mosque), Medina",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/0/0c/Masjid_Nabawi_The_Prophet%27s_Mosque%2C_Madina.jpg",
-    thirdName: "Masjid al-Haram & Abraj Al Bait Esplanade",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Edited_Great_Mosque_of_Mecca1_5-2019-ccsa4.0_%28cropped%29.jpg/1200px-Edited_Great_Mosque_of_Mecca1_5-2019-ccsa4.0_%28cropped%29.jpg",
+    secondPhoto: "/places/medina-prophets-mosque.jpg",
+    thirdName: "Abraj Al Bait Clock Tower & Haram Esplanade",
+    thirdPhoto: "/places/mecca-clock-tower.jpg",
   },
   "vatican-rome": {
     secondName: "Sistine Chapel & Vatican Museums",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/8/82/Sistina-interno.jpg",
-    thirdName: "St. Peter's Square Bernini Colonnade",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg/1200px-Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg",
+    secondPhoto: "/places/sistine-chapel.jpg",
+    thirdName: "Roman Colosseum & Papal Basilica Trail",
+    thirdPhoto: "/places/rome-colosseum.jpg",
+  },
+  jerusalem: {
+    secondName: "Western Wall Plaza & Old City Quarters",
+    secondPhoto: "/places/jerusalem-western-wall.jpg",
+    thirdName: "Church of the Holy Sepulchre Rotunda",
+    thirdPhoto: "/places/jerusalem-holy-sepulchre.jpg",
   },
   kathmandu: {
     secondName: "Boudhanath Stupa UNESCO Mandala Precinct",
-    secondPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Boudhanath_stupa_%2C_Kathmandu%2C_Nepal.jpg/1200px-Boudhanath_stupa_%2C_Kathmandu%2C_Nepal.jpg",
-    thirdName: "Pashupatinath Bagmati River Evening Aarati",
-    thirdPhoto:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Pashupatinath_Temple-2020.jpg/1200px-Pashupatinath_Temple-2020.jpg",
+    secondPhoto: "/places/boudhanath-stupa.jpg",
+    thirdName: "Swayambhunath Monkey Temple Hilltop",
+    thirdPhoto: "/places/kathmandu-swayambhunath.jpg",
   },
 };
 
@@ -1128,12 +1091,18 @@ export function buildSacredPlacesForDestination(
     },
     {
       placeId: `ChIJ_${dest.slug}_sattvic_bhojanalaya`,
-      name: `Shri Annapurna Sattvic Bhojanalaya & Prasadam — ${city}`,
+      name: dest.stateOrCountry.toLowerCase().includes("india")
+        ? `Shri Annapurna Sattvic Bhojanalaya & Prasadam — ${city}`
+        : `${city} Heritage Courtyard & Traditional Kitchen`,
       destinationSlug: dest.slug,
       destinationName: dest.name,
       category: "Restaurant",
-      subcategory: "Pure Vegetarian & Sattvic Kitchen",
-      description: `Wholesome pure vegetarian and sattvic meals prepared cleanly for pilgrims and families visiting ${city}.`,
+      subcategory: dest.stateOrCountry.toLowerCase().includes("india")
+        ? "Pure Vegetarian & Sattvic Kitchen"
+        : "Traditional Regional Dining",
+      description: dest.stateOrCountry.toLowerCase().includes("india")
+        ? `Wholesome pure vegetarian and sattvic meals prepared cleanly for pilgrims and families visiting ${city}.`
+        : `Welcoming local kitchen near the historic quarter of ${city} serving freshly prepared traditional regional dishes.`,
       address: `Near Main Shrine Corridor, ${city}`,
       lat: Number((baseLat + 0.006).toFixed(4)),
       lng: Number((baseLng - 0.005).toFixed(4)),
@@ -1141,12 +1110,15 @@ export function buildSacredPlacesForDestination(
       reviewCount: 8900,
       openingHours: "07:30 AM – 10:00 PM",
       priceLevel: "$",
-      estimatedCostINR: 320,
+      estimatedCostINR: dest.stateOrCountry.toLowerCase().includes("india") ? 320 : 1200,
       recommendedDurationMins: 65,
-      photoUrl:
-        "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=900&q=80",
-      dietarySupported: ["Vegetarian", "Vegan"],
-      cuisine: "Pure Vegetarian Sattvic & Regional Thali",
+      photoUrl: dest.stateOrCountry.toLowerCase().includes("india")
+        ? "/places/indian-thali-cuisine.jpg"
+        : specificLandmarks?.secondPhoto || dest.heroImage,
+      dietarySupported: ["Vegetarian", "Vegan", "Non-Vegetarian"],
+      cuisine: dest.stateOrCountry.toLowerCase().includes("india")
+        ? "Pure Vegetarian Sattvic & Regional Thali"
+        : `${city} Traditional Cuisine`,
     },
   ];
 

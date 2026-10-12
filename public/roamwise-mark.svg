@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">RoamWise compass mark</title>
+  <rect width="512" height="512" rx="116" fill="#075D66"/>
+  <circle cx="256" cy="256" r="156" fill="none" stroke="#E7F4EF" stroke-width="16" opacity=".92"/>
+  <circle cx="256" cy="256" r="124" fill="none" stroke="#9BCBC0" stroke-width="4" stroke-dasharray="4 16"/>
+  <path d="M336 166 286 276 176 342l50-110z" fill="#FF8066" stroke="#FFF9F1" stroke-linejoin="round" stroke-width="13"/>
+  <path d="m226 232 60 44" stroke="#FFF9F1" stroke-linecap="round" stroke-width="12"/>
+  <circle cx="256" cy="256" r="18" fill="#FFF9F1" stroke="#075D66" stroke-width="8"/>
+  <path d="M256 60v38M256 414v38M60 256h38M414 256h38" stroke="#FFF9F1" stroke-linecap="round" stroke-width="11" opacity=".9"/>
+  <path d="M350 355c28 1 54 15 69 40" fill="none" stroke="#FF8066" stroke-linecap="round" stroke-width="12"/>
+  <circle cx="420" cy="395" r="10" fill="#FF8066"/>
+</svg>

@@ -9,6 +9,58 @@ import React, {
 } from "react";
 import { Trip, TripWizardDraft, UserProfile } from "@/lib/types";
 import { recalculateTripMetrics } from "@/lib/ai-engine";
+import {
+  findDestinationInfo,
+  getCandidatePlacesForDestination,
+} from "@/lib/destinations-catalog";
+
+function normalizeTripPhotos(trip: Trip): Trip {
+  const destInfo = findDestinationInfo(
+    trip.destinationName || trip.destinationPlaceId || "Jaipur"
+  );
+  const candidates = getCandidatePlacesForDestination(destInfo.name);
+  const heroImage =
+    !trip.heroImage || trip.heroImage.startsWith("http")
+      ? destInfo.heroImage
+      : trip.heroImage;
+
+  const days = (trip.days || []).map((day) => ({
+    ...day,
+    activities: (day.activities || []).map((act, idx) => {
+      if (act.photoUrl && act.photoUrl.startsWith("/places/")) {
+        return act;
+      }
+      const matchedPlace =
+        candidates.find(
+          (c) =>
+            c.placeId === act.placeId ||
+            c.name.toLowerCase() === act.title.toLowerCase()
+        ) || candidates[idx % Math.max(1, candidates.length)];
+      return {
+        ...act,
+        photoUrl: matchedPlace?.photoUrl || destInfo.heroImage,
+      };
+    }),
+  }));
+
+  return {
+    ...trip,
+    heroImage,
+    days,
+  };
+}
+
+function normalizeDraftPhotos(draft: TripWizardDraft): TripWizardDraft {
+  if (!draft.destinationName && !draft.destinationPlaceId) return draft;
+  if (draft.heroImage && draft.heroImage.startsWith("/places/")) return draft;
+  const destInfo = findDestinationInfo(
+    draft.destinationName || draft.destinationPlaceId
+  );
+  return {
+    ...draft,
+    heroImage: destInfo.heroImage,
+  };
+}
 
 export interface ToastMessage {
   id: string;
@@ -187,7 +239,9 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
             localTrips.forEach((t: Trip) => {
               if (t.userId === targetUserId) mergedMap.set(t.id, t);
             });
-            const mergedList = Array.from(mergedMap.values());
+            const mergedList = Array.from(mergedMap.values()).map(
+              normalizeTripPhotos
+            );
             setTrips(mergedList);
             if (typeof window !== "undefined") {
               localStorage.setItem(
@@ -203,7 +257,8 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
             `${STORAGE_KEYS.TRIPS}_${targetUserId}`
           );
           if (localRaw) {
-            setTrips(JSON.parse(localRaw));
+            const parsed: Trip[] = JSON.parse(localRaw);
+            setTrips(parsed.map(normalizeTripPhotos));
           }
         }
       } finally {
@@ -244,7 +299,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
     const savedDraft = localStorage.getItem(STORAGE_KEYS.ACTIVE_DRAFT);
     if (savedDraft) {
       try {
-        setActiveDraft(JSON.parse(savedDraft));
+        setActiveDraft(normalizeDraftPhotos(JSON.parse(savedDraft)));
       } catch {
         // Ignore
       }
@@ -253,7 +308,8 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
     const savedDraftsList = localStorage.getItem(STORAGE_KEYS.DRAFTS);
     if (savedDraftsList) {
       try {
-        setDrafts(JSON.parse(savedDraftsList));
+        const parsedDrafts: TripWizardDraft[] = JSON.parse(savedDraftsList);
+        setDrafts(parsedDrafts.map(normalizeDraftPhotos));
       } catch {
         // Ignore
       }

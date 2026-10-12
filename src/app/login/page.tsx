@@ -1,20 +1,20 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-  ArrowRight,
-  CheckCircle2,
-  Sparkles,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Globe2, Sparkles } from "lucide-react";
 import { useRoamWise } from "@/context/RoamWiseContext";
-import { RoamWiseLogo } from "@/components/ui/BrandComponents";
+import { Brand } from "@/components/ui/BrandComponents";
 import { loginSchema } from "@/lib/validations";
+
+const AUTH_DYNAMIC_PHOTOS = [
+  "/places/kerala-backwaters.jpg",
+  "/places/switzerland-lauterbrunnen.jpg",
+  "/places/santorini-oia-caldera.jpg",
+  "/places/paris-louvre-pyramid.jpg",
+  "/places/jaipur-hawa-mahal.jpg",
+  "/places/bali-uluwatu.jpg",
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,13 +22,11 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [forgotMode, setForgotMode] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
-  const [redirectPath, setRedirectPath] = useState("/create-trip/destination");
+  const [redirectPath, setRedirectPath] = useState("/dashboard");
   const [pendingDest, setPendingDest] = useState("");
+  const [slideIdx, setSlideIdx] = useState(0);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -40,11 +38,22 @@ export default function LoginPage() {
     }
   }, []);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSlideIdx((prev) => (prev + 1) % AUTH_DYNAMIC_PHOTOS.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    const parsed = loginSchema.safeParse({ email, password, rememberMe });
+    const parsed = loginSchema.safeParse({
+      email,
+      password,
+      rememberMe: true,
+    });
     if (!parsed.success) {
       setErrorMsg(parsed.error.issues[0]?.message || "Invalid credentials.");
       return;
@@ -54,7 +63,7 @@ export default function LoginPage() {
     if (!res.ok) {
       setErrorMsg(
         res.error ||
-          "Account not found or password incorrect. New here? Click 'Create an account' below."
+          "Account not found or password incorrect. New here? Create an account below."
       );
       return;
     }
@@ -65,254 +74,190 @@ export default function LoginPage() {
     ) {
       router.push("/create-trip/dates");
     } else {
-      router.push(redirectPath || "/create-trip/destination");
+      router.push(redirectPath || "/dashboard");
     }
   };
 
-  const handlePasswordReset = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes("@")) {
-      setErrorMsg("Please enter a valid email address for password recovery.");
-      return;
-    }
-    setResetSent(true);
-    showToast(
-      "Password reset link sent",
-      `Recovery instructions sent to ${email}.`
+  const handleGoogleSignIn = async () => {
+    const res = await signIn(
+      email.trim() || "traveler@roamwise.app",
+      "Traveler",
+      true
     );
+    if (res.ok) {
+      router.push(redirectPath || "/dashboard");
+    }
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-background">
-      {/* Left Panel — Immersive Travel Photography */}
-      <div className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=85')",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/40" />
-
-        <div className="relative z-10">
-          <RoamWiseLogo lightText size="lg" />
+    <div className="auth-page">
+      <aside
+        className="auth-photo"
+        style={{
+          backgroundImage: `linear-gradient(0deg,rgba(12,34,36,.74),rgba(12,34,36,.05)),url('${AUTH_DYNAMIC_PHOTOS[slideIdx]}')`,
+          transition: "background-image 0.9s ease-in-out",
+        }}
+      >
+        <button
+          type="button"
+          className="auth-back"
+          onClick={() => router.push("/")}
+        >
+          <ArrowLeft size={16} /> Back to RoamWise
+        </button>
+        <div className="auth-photo-caption">
+          <Brand light />
+          <span className="eyebrow eyebrow-light">
+            NOT EVERY JOURNEY LOOKS THE SAME
+          </span>
+          <h2>
+            Every great journey
+            <br />
+            begins with <em>a feeling.</em>
+          </h2>
+          <p>Let the planning feel a little more like the anticipation.</p>
         </div>
+      </aside>
 
-        <div className="relative z-10 max-w-lg text-white">
-          <p className="text-xs font-bold uppercase tracking-widest text-sand mb-3">
-            Explore More. Plan Less. Travel Smarter.
+      <section className="auth-form-side">
+        <div className="auth-form-wrap">
+          <Brand />
+          <span className="eyebrow">PICK UP WHERE YOU LEFT OFF</span>
+          <h1>Welcome back.</h1>
+          <p className="auth-subtitle">
+            Your next good plan is waiting when you are.
           </p>
-          <h1 className="text-4xl font-heading font-extrabold leading-tight">
-            &ldquo;Every great journey begins with a plan.&rdquo;
-          </h1>
-          <p className="text-base text-white/85 mt-4 leading-relaxed">
-            Discover hidden trails, sacred pilgrimage shrines, local culinary
-            gems, and stress-free daily routes designed around how you love to
-            explore the world.
-          </p>
-        </div>
-      </div>
 
-      {/* Right Panel — Centered Authentication Form */}
-      <div className="flex flex-col justify-center items-center p-6 sm:p-12 bg-surface">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden mb-8">
-            <RoamWiseLogo size="md" />
-          </div>
-
-          {!forgotMode ? (
-            <>
-              {(pendingDest || activeDraft.destinationName) && (
-                <div className="mb-4 p-3.5 rounded-2xl bg-primary/10 border border-primary/25 flex items-center gap-2.5 text-xs font-medium text-heading">
-                  <Sparkles className="w-4 h-4 text-primary shrink-0" />
-                  <span>
-                    Sign in to continue planning your trip to{" "}
-                    <strong className="font-bold text-primary">
-                      {pendingDest || activeDraft.destinationName}
-                    </strong>
-                    .
-                  </span>
-                </div>
-              )}
-
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold text-heading">
-                Welcome back
-              </h2>
-              <p className="text-sm text-muted mt-1.5">
-                Sign in with your registered email and password to access your travel workspace.
-              </p>
-
-              {errorMsg && (
-                <div
-                  role="alert"
-                  className="mt-4 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs font-medium text-red-700 dark:text-red-300"
-                >
-                  {errorMsg}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                <div>
-                  <label
-                    htmlFor="login-email"
-                    className="block text-xs font-semibold text-heading mb-1.5"
-                  >
-                    Email Address
-                  </label>
-                  <div className="flex items-center gap-2.5 bg-background border border-border rounded-xl px-3.5 py-2.5 focus-within:border-primary">
-                    <Mail className="w-4 h-4 text-muted shrink-0" />
-                    <input
-                      id="login-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      required
-                      className="bg-transparent text-sm text-heading focus:outline-none w-full"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="login-password"
-                    className="block text-xs font-semibold text-heading mb-1.5"
-                  >
-                    Password
-                  </label>
-                  <div className="flex items-center gap-2.5 bg-background border border-border rounded-xl px-3.5 py-2.5 focus-within:border-primary">
-                    <Lock className="w-4 h-4 text-muted shrink-0" />
-                    <input
-                      id="login-password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      required
-                      className="bg-transparent text-sm text-heading focus:outline-none w-full"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((s) => !s)}
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
-                      className="text-muted hover:text-heading p-0.5"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-xs">
-                  <label className="inline-flex items-center gap-2 text-muted cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="rounded border-border text-primary focus:ring-primary"
-                    />
-                    <span>Remember me</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setForgotMode(true);
-                      setErrorMsg(null);
-                    }}
-                    className="font-semibold text-primary hover:underline"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isAuthLoading}
-                  className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-60 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm transition-colors"
-                >
-                  <span>
-                    {isAuthLoading ? "Signing in..." : "Sign In & Continue"}
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </form>
-
-              <p className="mt-6 text-center text-xs text-muted">
-                Don&apos;t have an account yet?{" "}
-                <Link
-                  href={`/signup?redirect=${encodeURIComponent(redirectPath)}${pendingDest ? `&dest=${encodeURIComponent(pendingDest)}` : ""}`}
-                  className="font-semibold text-primary hover:underline"
-                >
-                  Create an account
-                </Link>
-              </p>
-
-              <div className="mt-4 text-center">
-                <Link
-                  href="/dashboard"
-                  className="text-xs text-muted hover:text-heading"
-                >
-                  ← Back to Dashboard Showcase
-                </Link>
-              </div>
-            </>
-          ) : (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-heading font-bold text-heading">
-                Reset your password
-              </h2>
-              <p className="text-sm text-muted">
-                Enter your account email and we&apos;ll send a secure recovery
-                link.
-              </p>
-              {resetSent ? (
-                <div className="p-4 rounded-xl bg-success/10 border border-success/30 text-sm text-heading flex items-start gap-2.5">
-                  <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold">Check your inbox</p>
-                    <p className="text-xs text-muted mt-0.5">
-                      We sent a password reset link to {email}.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handlePasswordReset} className="space-y-4">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm text-heading"
-                  />
-                  <button
-                    type="submit"
-                    className="w-full py-2.5 px-4 rounded-xl bg-primary text-white font-semibold text-sm"
-                  >
-                    Send Recovery Link
-                  </button>
-                </form>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setForgotMode(false);
-                  setResetSent(false);
-                }}
-                className="text-xs font-semibold text-primary hover:underline"
-              >
-                ← Back to Sign In
-              </button>
+          {pendingDest && (
+            <div className="demo-callout">
+              <Sparkles size={16} />
+              <span>
+                <b>Destination selected: {pendingDest}.</b> Sign in to continue
+                building your itinerary.
+              </span>
             </div>
           )}
+
+          {errorMsg && (
+            <div className="field-error" role="alert" style={{ marginBottom: 12 }}>
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="auth-form">
+            <label className="form-field">
+              <span>Email address</span>
+              <input
+                required
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </label>
+            <label className="form-field">
+              <span>Password</span>
+              <div className="password-field">
+                <input
+                  required
+                  minLength={8}
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </label>
+
+            <button
+              type="button"
+              className="forgot-link"
+              onClick={() => {
+                if (!email || !email.includes("@")) {
+                  showToast(
+                    "Enter your email first",
+                    "Type your registered email address to request a reset link.",
+                    "warning"
+                  );
+                  return;
+                }
+                showToast(
+                  "Password reset email sent",
+                  `If ${email} is registered, recovery instructions are on the way.`
+                );
+              }}
+            >
+              Forgot password?
+            </button>
+
+            <button
+              className="button button-primary button-wide"
+              type="submit"
+              disabled={isAuthLoading}
+            >
+              {isAuthLoading ? "Please wait…" : "Sign in"}
+              <ArrowRight size={16} />
+            </button>
+          </form>
+
+          <div className="auth-divider">
+            <span />
+            or
+            <span />
+          </div>
+          <button
+            type="button"
+            className="button button-outline button-wide"
+            onClick={handleGoogleSignIn}
+          >
+            <Globe2 size={16} /> Continue with Google
+          </button>
+
+          <div className="auth-demo-choice">
+            <span>Want to look around first?</span>
+            <button type="button" onClick={() => router.push("/dashboard")}>
+              Explore workspace preview
+            </button>
+          </div>
+
+          <p className="auth-switch">
+            New to RoamWise?{" "}
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  `/signup${
+                    redirectPath
+                      ? `?redirect=${encodeURIComponent(redirectPath)}`
+                      : ""
+                  }${
+                    pendingDest
+                      ? `${redirectPath ? "&" : "?"}dest=${encodeURIComponent(
+                          pendingDest
+                        )}`
+                      : ""
+                  }`
+                )
+              }
+            >
+              Create an account
+            </button>
+          </p>
+
+          <div className="auth-legal">
+            By continuing, you agree to our <a href="#terms">Terms</a> and{" "}
+            <a href="#privacy">Privacy Policy.</a>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

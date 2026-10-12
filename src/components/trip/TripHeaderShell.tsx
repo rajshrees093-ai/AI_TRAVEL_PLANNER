@@ -8,19 +8,16 @@ import {
   Edit3,
   Share2,
   RefreshCw,
-  MoreHorizontal,
   Calendar,
   Compass,
   Wallet,
   Clock,
-  Users,
   Printer,
   Copy,
   Trash2,
   Check,
   Link2,
   ShieldAlert,
-  X,
   Sparkles,
   FileDown,
 } from "lucide-react";
@@ -28,7 +25,7 @@ import { Trip, SharedTripLink } from "@/lib/types";
 import { useRoamWise } from "@/context/RoamWiseContext";
 import { ConfirmDialog } from "@/components/ui/BrandComponents";
 import { IllustratedPdfModal } from "./IllustratedPdfModal";
-import { cn, formatCurrency, formatDateRange } from "@/lib/utils";
+import { formatCurrency, formatDateRange } from "@/lib/utils";
 
 interface TripHeaderShellProps {
   tripId: string;
@@ -51,13 +48,12 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
   const [loading, setLoading] = useState(!trip);
   const [unauthorized, setUnauthorized] = useState(false);
 
-  const [moreOpen, setMoreOpen] = useState(false);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
-  // Share Modal State
+  // Share Panel State
   const [shareOpen, setShareOpen] = useState(false);
   const [includeBudgetInShare, setIncludeBudgetInShare] = useState(true);
   const [shareExpiration, setShareExpiration] = useState("");
@@ -110,19 +106,14 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
     return () => {
       active = false;
     };
-  }, [tripId, localTrip]);
+  }, [tripId, localTrip, user?.id]);
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-64 rounded-3xl bg-surface border border-border animate-pulse" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((n) => (
-            <div
-              key={n}
-              className="h-24 rounded-2xl bg-surface border border-border animate-pulse"
-            />
-          ))}
+      <div className="trip-workspace">
+        <div className="empty-panel">
+          <h3>Loading your itinerary...</h3>
+          <p>Fetching verified stops, route coordinates, and budget items.</p>
         </div>
       </div>
     );
@@ -130,47 +121,34 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
 
   if (unauthorized) {
     return (
-      <div className="bg-surface border border-border rounded-2xl p-10 text-center max-w-lg mx-auto my-8">
-        <div className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
-          <ShieldAlert className="w-7 h-7" />
+      <div className="access-gate">
+        <div className="access-gate-icon">
+          <ShieldAlert className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-heading font-bold text-heading">
-          Unauthorized Trip Access
-        </h2>
-        <p className="text-sm text-muted mt-2">
-          This itinerary is private and belongs to another traveler.
-        </p>
-        <Link
-          href="/dashboard"
-          className="mt-6 inline-block px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold"
-        >
-          Return to Dashboard
-        </Link>
+        <h2>Unauthorized Trip Access</h2>
+        <p>This itinerary is private and belongs to another traveler.</p>
+        <div className="access-gate-actions">
+          <Link href="/dashboard" className="button button-primary">
+            Return to Dashboard
+          </Link>
+        </div>
       </div>
     );
   }
 
   if (!trip) {
     return (
-      <div className="bg-surface border border-border rounded-2xl p-10 text-center max-w-lg mx-auto my-8">
-        <h2 className="text-xl font-heading font-bold text-heading">
-          Itinerary Not Found
-        </h2>
-        <p className="text-sm text-muted mt-2">
-          We couldn&apos;t locate this trip. Try selecting one from your Dashboard
-          or planning a new adventure.
+      <div className="access-gate">
+        <h2>Itinerary Not Found</h2>
+        <p>
+          We couldn’t locate this trip. Try selecting one from your Dashboard or
+          planning a new adventure.
         </p>
-        <div className="mt-6 flex justify-center gap-3">
-          <Link
-            href="/dashboard"
-            className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold"
-          >
+        <div className="access-gate-actions">
+          <Link href="/dashboard" className="button button-primary">
             Go to Dashboard
           </Link>
-          <Link
-            href="/trips/trip-manali-flagship"
-            className="px-5 py-2.5 rounded-xl border border-border text-heading text-sm font-medium"
-          >
+          <Link href="/trips/trip-manali-flagship" className="button button-quiet">
             Open Sample Manali Trip
           </Link>
         </div>
@@ -275,7 +253,6 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
         }
       }
     } catch {
-      // Fallback client share token
       const fallbackLink: SharedTripLink = {
         id: `share-${Date.now()}`,
         tripId: trip.id,
@@ -325,349 +302,253 @@ export function TripHeaderShell({ tripId, children }: TripHeaderShellProps) {
       : "";
 
   return (
-    <div className="space-y-6">
-      {/* Hero Banner */}
-      <div className="relative rounded-3xl overflow-hidden border border-border shadow-soft">
-        <div
-          className="h-64 sm:h-80 w-full bg-cover bg-center"
-          style={{ backgroundImage: `url('${trip.heroImage}')` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20" />
-
-        <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-between text-white">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold border border-white/25">
-                {trip.destinationCountry}
+    <div className="trip-workspace">
+      {/* Trip Hero */}
+      <div
+        className="trip-hero"
+        style={{
+          backgroundImage: `linear-gradient(125deg, rgba(10, 26, 36, 0.86), rgba(8, 127, 140, 0.56)), url('${trip.heroImage}')`,
+        }}
+      >
+        <div className="trip-hero-copy">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            <span className="hero-badge">{trip.destinationCountry}</span>
+            <span className="hero-badge">
+              {trip.travelPace} Pace • {trip.travelTier}
+            </span>
+            {trip.isDemoData && (
+              <span className="hero-badge">
+                <Sparkles className="w-3.5 h-3.5" /> Verified Catalog Mode
               </span>
-              <span className="px-3 py-1 rounded-full bg-primary/90 text-white text-xs font-semibold">
-                {trip.travelPace} Pace • {trip.travelTier}
-              </span>
-              {trip.isDemoData && (
-                <span className="px-3 py-1 rounded-full bg-sand/95 text-heading text-[11px] font-semibold flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-primary" />
-                  Verified Catalog Mode
-                </span>
-              )}
-            </div>
-
-            {/* Action Bar */}
-            <div className="flex flex-wrap items-center gap-2 no-print">
-              <button
-                type="button"
-                onClick={() =>
-                  saveOrUpdateTrip(
-                    { ...trip, isSaved: true },
-                    "Trip saved to your collection!"
-                  )
-                }
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold shadow-sm transition-colors"
-              >
-                <Bookmark className="w-3.5 h-3.5 fill-current" />
-                <span>{trip.isSaved ? "Saved" : "Save Trip"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPdfModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs font-semibold shadow-sm transition-colors"
-              >
-                <FileDown className="w-3.5 h-3.5" />
-                <span>Download PDF (with Photos)</span>
-              </button>
-
-              <Link
-                href={`/trips/${trip.id}/edit`}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/25 text-xs font-semibold transition-colors"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Make Changes / Edit</span>
-              </Link>
-
-              <button
-                type="button"
-                onClick={() => setShareOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/25 text-xs font-semibold transition-colors"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>Share</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isRegenerating}
-                onClick={() => setConfirmRegen(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/25 text-xs font-semibold transition-colors"
-              >
-                <RefreshCw
-                  className={cn("w-3.5 h-3.5", isRegenerating && "animate-spin")}
-                />
-                <span>{isRegenerating ? "Regenerating..." : "Regenerate"}</span>
-              </button>
-
-              {/* More Options Dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setMoreOpen((m) => !m)}
-                  aria-label="More trip options"
-                  className="p-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/25"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-
-                {moreOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-surface border border-border rounded-2xl shadow-elevated py-1.5 z-30 text-heading">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMoreOpen(false);
-                        setPdfModalOpen(true);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium hover:bg-sand/40 text-left"
-                    >
-                      <Printer className="w-4 h-4 text-primary" />
-                      <span>Download PDF with Place Photos</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setMoreOpen(false);
-                        const copy = await duplicateTrip(trip.id);
-                        if (copy) router.push(`/trips/${copy.id}`);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium hover:bg-sand/40 text-left"
-                    >
-                      <Copy className="w-4 h-4 text-primary" />
-                      <span>Duplicate Trip</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMoreOpen(false);
-                        setConfirmDelete(true);
-                      }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 text-left"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Delete Trip</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
           </div>
+          <h1>{trip.title}</h1>
+          <p className="trip-theme">{trip.themeTagline}</p>
+          <p>
+            {formatDateRange(trip.startDate, trip.endDate)} • {trip.travelers}{" "}
+            {trip.travelers === 1 ? "Traveler" : "Travelers"} ({trip.travelType}
+            ) • Origin: {trip.startCity}
+          </p>
+        </div>
 
-          <div>
-            <h2 className="text-2xl sm:text-4xl font-heading font-extrabold leading-tight">
-              {trip.title}
-            </h2>
-            <p className="text-sm sm:text-base text-white/90 mt-1 max-w-2xl">
-              {trip.themeTagline}
-            </p>
-            <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-white/85">
-              <span className="inline-flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-accent" />
-                {formatDateRange(trip.startDate, trip.endDate)}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-accent" />
-                {trip.travelers}{" "}
-                {trip.travelers === 1 ? "Traveler" : "Travelers"} (
-                {trip.travelType})
-              </span>
-              <span>Origin: {trip.startCity}</span>
-            </div>
-          </div>
+        <div className="trip-hero-actions no-print">
+          <button
+            type="button"
+            className="trip-action primary"
+            onClick={() =>
+              saveOrUpdateTrip(
+                { ...trip, isSaved: true },
+                "Trip saved to your collection!"
+              )
+            }
+          >
+            <Bookmark className="w-3.5 h-3.5" />
+            <span>{trip.isSaved ? "Saved" : "Save Trip"}</span>
+          </button>
+
+          <button
+            type="button"
+            className="trip-action"
+            onClick={() => setPdfModalOpen(true)}
+          >
+            <FileDown className="w-3.5 h-3.5" />
+            <span>Download PDF (with Photos)</span>
+          </button>
+
+          <Link href={`/trips/${trip.id}/edit`} className="trip-action">
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Make Changes / Edit</span>
+          </Link>
+
+          <button
+            type="button"
+            className="trip-action"
+            onClick={() => setShareOpen((prev) => !prev)}
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>Share</span>
+          </button>
+
+          <button
+            type="button"
+            className="trip-action"
+            disabled={isRegenerating}
+            onClick={() => setConfirmRegen(true)}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>{isRegenerating ? "Regenerating..." : "Regenerate"}</span>
+          </button>
+
+          <button
+            type="button"
+            className="trip-action"
+            onClick={async () => {
+              const copy = await duplicateTrip(trip.id);
+              if (copy) router.push(`/trips/${copy.id}`);
+            }}
+          >
+            <Copy className="w-3.5 h-3.5" />
+            <span>Duplicate</span>
+          </button>
+
+          <button
+            type="button"
+            className="trip-action"
+            onClick={() => window.print()}
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>Print</span>
+          </button>
+
+          <button
+            type="button"
+            className="trip-action"
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Delete</span>
+          </button>
         </div>
       </div>
 
+      {/* Share Options Drawer */}
+      {shareOpen && (
+        <div role="dialog" aria-modal="true" className="share-options">
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "18px" }}>
+            <strong style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Share2 className="w-4 h-4" /> Share Itinerary
+            </strong>
+            <label className="checkbox-pill">
+              <input
+                type="checkbox"
+                checked={includeBudgetInShare}
+                onChange={(e) => setIncludeBudgetInShare(e.target.checked)}
+              />
+              <span>Include budget breakdown on shared page</span>
+            </label>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "0.84rem" }}>
+              <span>Expires:</span>
+              <input
+                type="date"
+                value={shareExpiration}
+                onChange={(e) => setShareExpiration(e.target.value)}
+                style={{
+                  border: "1px solid var(--line)",
+                  borderRadius: "10px",
+                  padding: "4px 8px",
+                }}
+              />
+            </label>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
+            {!activeShareLink ? (
+              <button
+                type="button"
+                className="button button-primary button-sm"
+                onClick={handleGenerateShareLink}
+              >
+                <Link2 className="w-4 h-4" /> Create Shareable Link
+              </button>
+            ) : (
+              <>
+                <code className="share-url">{shareUrl}</code>
+                <button
+                  type="button"
+                  className="button button-primary button-sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(shareUrl);
+                    setCopiedShare(true);
+                    showToast("Share link copied!", shareUrl);
+                    setTimeout(() => setCopiedShare(false), 2000);
+                  }}
+                >
+                  {copiedShare ? (
+                    <Check className="w-3.5 h-3.5" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                  <span>{copiedShare ? "Copied" : "Copy"}</span>
+                </button>
+                <Link
+                  href={`/share/${activeShareLink.token}`}
+                  className="button button-quiet button-sm"
+                >
+                  Open Shared Preview
+                </Link>
+                <button
+                  type="button"
+                  className="button button-danger button-sm"
+                  onClick={handleRevokeShareLink}
+                >
+                  Revoke Link
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 4 Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-soft flex items-center justify-between">
+      <div className="trip-summary-row">
+        <div className="stat-card">
+          <span className="stat-icon">
+            <Calendar className="w-4 h-4" />
+          </span>
           <div>
-            <p className="text-xs font-semibold text-muted">Total Days</p>
-            <p className="text-2xl font-heading font-extrabold text-heading mt-1">
-              {trip.durationDays} Days
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-            <Calendar className="w-5 h-5" />
+            <span>Total Days</span>
+            <strong>{trip.durationDays} Days</strong>
           </div>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-soft flex items-center justify-between">
+        <div className="stat-card">
+          <span className="stat-icon">
+            <Compass className="w-4 h-4" />
+          </span>
           <div>
-            <p className="text-xs font-semibold text-muted">Total Activities</p>
-            <p className="text-2xl font-heading font-extrabold text-heading mt-1">
-              {totalActivities} Stops
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
-            <Compass className="w-5 h-5" />
+            <span>Total Activities</span>
+            <strong>{totalActivities} Stops</strong>
           </div>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-soft flex items-center justify-between">
+        <div className="stat-card">
+          <span className="stat-icon">
+            <Wallet className="w-4 h-4" />
+          </span>
           <div>
-            <p className="text-xs font-semibold text-muted">
-              Estimated Trip Cost
-            </p>
-            <p className="text-2xl font-heading font-extrabold text-heading mt-1">
-              {formatCurrency(totalEstimatedCost, trip.currency)}
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center">
-            <Wallet className="w-5 h-5" />
+            <span>Estimated Trip Cost</span>
+            <strong>{formatCurrency(totalEstimatedCost, trip.currency)}</strong>
           </div>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-soft flex items-center justify-between">
+        <div className="stat-card">
+          <span className="stat-icon">
+            <Clock className="w-4 h-4" />
+          </span>
           <div>
-            <p className="text-xs font-semibold text-muted">
-              Estimated Travel Time
-            </p>
-            <p className="text-2xl font-heading font-extrabold text-heading mt-1">
+            <span>Estimated Travel Time</span>
+            <strong>
               {Math.floor(totalTransitMins / 60)}h {totalTransitMins % 60}m
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-warning/10 text-warning flex items-center justify-center">
-            <Clock className="w-5 h-5" />
+            </strong>
           </div>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-border overflow-x-auto no-print">
-        <nav className="flex items-center gap-1 sm:gap-2 min-w-max">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={cn(
-                "px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors",
-                tab.active
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted hover:text-heading"
-              )}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      <nav className="trip-tabs no-print">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={`trip-tab ${tab.active ? "active" : ""}`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
 
       {/* Active Tab Content */}
       <div>{children}</div>
-
-      {/* Share Modal */}
-      {shareOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
-        >
-          <div className="bg-surface border border-border rounded-2xl max-w-md w-full p-6 shadow-elevated">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-heading font-bold text-heading flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-primary" />
-                <span>Share Itinerary</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShareOpen(false)}
-                className="p-1 text-muted hover:text-heading rounded-lg"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-muted leading-relaxed">
-              Generate a secure read-only link for travel companions. Private
-              notes and personal account details are never exposed.
-            </p>
-
-            <div className="mt-4 space-y-3 bg-background border border-border rounded-xl p-4">
-              <label className="flex items-center justify-between text-xs font-medium text-heading cursor-pointer">
-                <span>Include budget breakdown on shared page</span>
-                <input
-                  type="checkbox"
-                  checked={includeBudgetInShare}
-                  onChange={(e) => setIncludeBudgetInShare(e.target.checked)}
-                  className="rounded border-border text-primary"
-                />
-              </label>
-
-              <div>
-                <label className="block text-xs font-medium text-muted mb-1">
-                  Optional Link Expiration Date
-                </label>
-                <input
-                  type="date"
-                  value={shareExpiration}
-                  onChange={(e) => setShareExpiration(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-surface border border-border text-xs text-heading"
-                />
-              </div>
-            </div>
-
-            {!activeShareLink ? (
-              <button
-                type="button"
-                onClick={handleGenerateShareLink}
-                className="mt-5 w-full py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-semibold flex items-center justify-center gap-2"
-              >
-                <Link2 className="w-4 h-4" />
-                <span>Create Shareable Link</span>
-              </button>
-            ) : (
-              <div className="mt-5 space-y-3">
-                <div className="flex items-center gap-2 bg-background border border-border rounded-xl p-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={shareUrl}
-                    className="bg-transparent text-xs text-heading font-mono flex-1 focus:outline-none px-2"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(shareUrl);
-                      setCopiedShare(true);
-                      showToast("Share link copied!", shareUrl);
-                      setTimeout(() => setCopiedShare(false), 2000);
-                    }}
-                    className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold flex items-center gap-1"
-                  >
-                    {copiedShare ? (
-                      <Check className="w-3.5 h-3.5" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                    <span>{copiedShare ? "Copied" : "Copy"}</span>
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <Link
-                    href={`/share/${activeShareLink.token}`}
-                    className="text-xs font-semibold text-primary hover:underline"
-                  >
-                    Open Shared Preview →
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleRevokeShareLink}
-                    className="text-xs font-semibold text-red-600 hover:underline"
-                  >
-                    Revoke Link Access
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       <ConfirmDialog
         open={confirmRegen}

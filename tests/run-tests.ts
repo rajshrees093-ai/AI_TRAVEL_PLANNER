@@ -390,7 +390,10 @@ async function runAllTests() {
     assert.equal(sacredTrip.days.length, 3, "Sacred trip must generate 3 days");
     for (const d of sacredTrip.days) {
       for (const act of d.activities) {
-        assert.ok(act.photoUrl.startsWith("http"), "Every activity must have a photo URL for Illustrated PDF export");
+        assert.ok(
+          act.photoUrl.startsWith("/places/") || act.photoUrl.startsWith("http"),
+          "Every activity must have a verified photo URL for Illustrated PDF export"
+        );
       }
     }
 
