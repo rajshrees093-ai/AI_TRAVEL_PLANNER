@@ -45,9 +45,26 @@ const STEPS = [
 
 export function WizardProgressStepper({ currentStep }: { currentStep: number }) {
   const router = useRouter();
-  const { activeDraft, saveDraftToContinueList } = useRoamWise();
+  const { activeDraft, updateActiveDraft, saveDraftToContinueList } = useRoamWise();
   const currentMeta = STEPS[currentStep - 1] || STEPS[0];
   const prevStep = currentStep > 1 ? STEPS[currentStep - 2] : null;
+
+  const handleStepClick = (targetStep: (typeof STEPS)[number]) => {
+    if (targetStep.step > 1 && !activeDraft.destinationPlaceId) {
+      updateActiveDraft({
+        destinationPlaceId: "ChIJP9A_F1H0BDkR0GZ2K4e5_2M",
+        destinationName: "Manali",
+        destinationCountry: "Himachal Pradesh, India",
+        heroImage: "/places/manali-solang-valley.jpg",
+        currentStep: targetStep.step,
+      });
+    } else {
+      updateActiveDraft({
+        currentStep: Math.max(activeDraft.currentStep, targetStep.step),
+      });
+    }
+    router.push(targetStep.href);
+  };
 
   return (
     <>
@@ -88,8 +105,6 @@ export function WizardProgressStepper({ currentStep }: { currentStep: number }) 
         {STEPS.map((s, idx) => {
           const isCompleted = s.step < currentStep;
           const isCurrent = s.step === currentStep;
-          const canNavigate =
-            s.step <= currentStep || Boolean(activeDraft.destinationPlaceId);
 
           return (
             <button
@@ -98,8 +113,7 @@ export function WizardProgressStepper({ currentStep }: { currentStep: number }) 
               className={`stepper-item ${isCurrent ? "current" : ""} ${
                 isCompleted ? "completed" : ""
               }`}
-              disabled={!canNavigate}
-              onClick={() => canNavigate && router.push(s.href)}
+              onClick={() => handleStepClick(s)}
             >
               <span className="stepper-dot">
                 {isCompleted ? <Check size={13} /> : `0${idx + 1}`}

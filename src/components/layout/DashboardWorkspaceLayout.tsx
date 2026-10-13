@@ -36,85 +36,37 @@ export function DashboardWorkspaceLayout({
   title,
   breadcrumbs,
   actions,
-  allowPublicPreview = false,
 }: DashboardWorkspaceLayoutProps) {
   const pathname = usePathname() || "/dashboard";
   const router = useRouter();
   const {
     user,
+    trips,
     isAuthenticated,
     theme,
     toggleTheme,
     signOut,
+    toasts,
+    dismissToast,
   } = useRoamWise();
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isPublicDashboardRoute =
-    allowPublicPreview || pathname === "/dashboard" || pathname === "/";
-
-  if (!isAuthenticated && !isPublicDashboardRoute) {
-    return (
-      <div className="access-gate">
-        <div className="gate-card">
-          <RoamWiseLogo />
-          <span className="eyebrow">A LITTLE JOURNEY STARTS HERE</span>
-          <h1>
-            Make room for a<br />
-            <em>great trip.</em>
-          </h1>
-          <p>
-            Sign in with your RouteBloom account, or create a free account to
-            plan, customize, and save your itineraries.
-          </p>
-          <button
-            className="button button-primary button-wide"
-            onClick={() =>
-              router.push(
-                `/login?redirect=${encodeURIComponent(pathname || "/dashboard")}`
-              )
-            }
-          >
-            Sign in to RouteBloom <ArrowRight size={17} />
-          </button>
-          <button
-            className="button button-quiet button-wide"
-            onClick={() =>
-              router.push(
-                `/signup?redirect=${encodeURIComponent(pathname || "/dashboard")}`
-              )
-            }
-          >
-            Create a free account
-          </button>
-          <button
-            className="button button-quiet button-wide"
-            onClick={() => router.push("/dashboard")}
-          >
-            Explore dashboard preview
-          </button>
-          <span className="gate-note">
-            <ShieldCheck size={14} /> Your saved itineraries stay private to
-            your account.
-          </span>
-        </div>
-        <div
-          className="gate-photo"
-          style={{
-            backgroundImage: "url('/places/manali-solang-valley.jpg')",
-          }}
-        />
-      </div>
-    );
-  }
-
-  const navigate = (path: string, requiresAuth = false) => {
+  const navigate = (path: string) => {
     setMobileOpen(false);
-    if (requiresAuth && !isAuthenticated) {
-      router.push(`/signup?redirect=${encodeURIComponent(path)}`);
-      return;
-    }
     router.push(path);
+  };
+
+  const handleExploreDestinations = () => {
+    setMobileOpen(false);
+    if (pathname === "/dashboard" && typeof document !== "undefined") {
+      const el = document.getElementById("explore-destinations");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+    }
+    router.push("/create-trip/destination");
   };
 
   const currentTitle = pathname.startsWith("/dashboard")
@@ -150,7 +102,7 @@ export function DashboardWorkspaceLayout({
           <button
             type="button"
             className={`side-link ${pathname.startsWith("/create-trip") ? "active" : ""}`}
-            onClick={() => navigate("/create-trip/destination", true)}
+            onClick={() => navigate("/create-trip/destination")}
           >
             <Plus />
             <span>Plan a new trip</span>
@@ -159,7 +111,7 @@ export function DashboardWorkspaceLayout({
           <button
             type="button"
             className="side-link"
-            onClick={() => navigate("/dashboard#explore-destinations")}
+            onClick={handleExploreDestinations}
           >
             <Compass />
             <span>Explore destinations</span>
@@ -167,7 +119,11 @@ export function DashboardWorkspaceLayout({
           <button
             type="button"
             className={`side-link ${pathname.startsWith("/trips/") ? "active" : ""}`}
-            onClick={() => navigate("/saved-trips", true)}
+            onClick={() =>
+              navigate(
+                trips.length > 0 ? `/trips/${trips[0].id}` : "/saved-trips"
+              )
+            }
           >
             <Map />
             <span>My trips</span>
@@ -175,7 +131,7 @@ export function DashboardWorkspaceLayout({
           <button
             type="button"
             className={`side-link ${pathname.startsWith("/saved-trips") ? "active" : ""}`}
-            onClick={() => navigate("/saved-trips", true)}
+            onClick={() => navigate("/saved-trips")}
           >
             <Bookmark />
             <span>Saved trips</span>
@@ -187,7 +143,7 @@ export function DashboardWorkspaceLayout({
           <button
             type="button"
             className={`side-link ${pathname.startsWith("/profile") ? "active" : ""}`}
-            onClick={() => navigate("/profile", true)}
+            onClick={() => navigate("/profile")}
           >
             <CircleUserRound />
             <span>Profile</span>
@@ -195,7 +151,7 @@ export function DashboardWorkspaceLayout({
           <button
             type="button"
             className="side-link"
-            onClick={() => navigate("/profile#account-settings", true)}
+            onClick={() => navigate("/profile#account-settings")}
           >
             <Settings2 />
             <span>Settings</span>
@@ -227,7 +183,7 @@ export function DashboardWorkspaceLayout({
               <div className="avatar">G</div>
               <div className="profile-mini-copy">
                 <strong>Guest Explorer</strong>
-                <span>Sign in to save trips</span>
+                <span>Sign in or plan freely</span>
               </div>
               <button
                 type="button"
@@ -305,7 +261,7 @@ export function DashboardWorkspaceLayout({
             {actions}
             <span className="mode-pill">
               <span className="mode-dot" />
-              {isAuthenticated ? "Verified catalog" : "Guest preview"}
+              {isAuthenticated ? "Verified catalog" : "Workspace ready"}
             </span>
             <button
               type="button"
@@ -320,9 +276,7 @@ export function DashboardWorkspaceLayout({
             <button
               type="button"
               className="avatar avatar-small"
-              onClick={() =>
-                navigate(isAuthenticated ? "/profile" : "/login")
-              }
+              onClick={() => navigate("/profile")}
               aria-label="Open profile"
             >
               {avatarInitial}
@@ -331,6 +285,31 @@ export function DashboardWorkspaceLayout({
         </header>
 
         <div className="content-wrap">{children}</div>
+
+        {toasts.length > 0 && (
+          <div className="toast-stack no-print" role="status" aria-live="polite">
+            {toasts.map((t) => (
+              <div
+                key={t.id}
+                className="toast"
+                onClick={() => dismissToast(t.id)}
+                style={{ cursor: "pointer" }}
+              >
+                <Sparkles size={16} />
+                <div>
+                  <strong style={{ display: "block", fontSize: "0.86rem" }}>
+                    {t.title}
+                  </strong>
+                  {t.description && (
+                    <span style={{ fontSize: "0.78rem", opacity: 0.85 }}>
+                      {t.description}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
 
       <nav className="mobile-bottom-nav no-print" aria-label="Quick navigation">
@@ -340,16 +319,16 @@ export function DashboardWorkspaceLayout({
         </button>
         <button
           type="button"
-          onClick={() => navigate("/create-trip/destination", true)}
+          onClick={() => navigate("/create-trip/destination")}
         >
           <Plus size={19} />
           <span>Plan</span>
         </button>
-        <button type="button" onClick={() => navigate("/saved-trips", true)}>
+        <button type="button" onClick={() => navigate("/saved-trips")}>
           <Bookmark size={19} />
           <span>Trips</span>
         </button>
-        <button type="button" onClick={() => navigate("/profile", true)}>
+        <button type="button" onClick={() => navigate("/profile")}>
           <CircleUserRound size={19} />
           <span>Profile</span>
         </button>

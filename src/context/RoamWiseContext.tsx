@@ -83,10 +83,15 @@ interface RoamWiseContextValue {
   activeDraft: TripWizardDraft;
   updateActiveDraft: (partial: Partial<TripWizardDraft>) => void;
   resetActiveDraft: (prefillDestination?: {
-    placeId: string;
-    name: string;
-    country: string;
+    placeId?: string;
+    name?: string;
+    country?: string;
     heroImage?: string;
+    startDate?: string;
+    endDate?: string;
+    durationDays?: number;
+    budgetAmount?: number;
+    travelers?: number;
   }) => void;
   saveDraftToContinueList: () => void;
   removeDraft: (draftId: string) => void;
@@ -180,7 +185,6 @@ const STORAGE_KEYS = {
 };
 
 export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
-  // No demo user by default — user starts unauthenticated until they sign up or log in
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
@@ -214,12 +218,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
 
   const refreshTrips = useCallback(
     async (overrideUserId?: string) => {
-      const targetUserId = overrideUserId ?? user?.id;
-      if (!targetUserId) {
-        setTrips([]);
-        setIsLoadingTrips(false);
-        return;
-      }
+      const targetUserId = overrideUserId ?? user?.id ?? "guest-user";
 
       setIsLoadingTrips(true);
       try {
@@ -237,7 +236,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
             const mergedMap = new Map<string, Trip>();
             data.trips.forEach((t: Trip) => mergedMap.set(t.id, t));
             localTrips.forEach((t: Trip) => {
-              if (t.userId === targetUserId) mergedMap.set(t.id, t);
+              mergedMap.set(t.id, t);
             });
             const mergedList = Array.from(mergedMap.values()).map(
               normalizeTripPhotos
@@ -283,18 +282,20 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
     const savedAuth = localStorage.getItem(STORAGE_KEYS.AUTH_STATE);
     const savedUserRaw = localStorage.getItem(STORAGE_KEYS.USER);
 
+    let resolvedUserId = "guest-user";
     if (savedAuth === "true" && savedUserRaw) {
       try {
         const parsedUser = JSON.parse(savedUserRaw) as UserProfile;
         if (parsedUser && parsedUser.id && parsedUser.id !== "user-roamwise-demo") {
           setUser(parsedUser);
           setIsAuthenticated(true);
-          refreshTrips(parsedUser.id);
+          resolvedUserId = parsedUser.id;
         }
       } catch {
         // Ignore parse error
       }
     }
+    refreshTrips(resolvedUserId);
 
     const savedDraft = localStorage.getItem(STORAGE_KEYS.ACTIVE_DRAFT);
     if (savedDraft) {
@@ -350,18 +351,54 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
 
   const resetActiveDraft = useCallback(
     (prefillDestination?: {
-      placeId: string;
-      name: string;
-      country: string;
+      placeId?: string;
+      name?: string;
+      country?: string;
       heroImage?: string;
+      startDate?: string;
+      endDate?: string;
+      durationDays?: number;
+      budgetAmount?: number;
+      travelers?: number;
     }) => {
       const fresh = createInitialDraft(user);
       if (prefillDestination) {
-        fresh.destinationPlaceId = prefillDestination.placeId;
-        fresh.destinationName = prefillDestination.name;
-        fresh.destinationCountry = prefillDestination.country;
-        fresh.heroImage = prefillDestination.heroImage || "";
-        fresh.currentStep = 2;
+        if (prefillDestination.placeId) {
+          fresh.destinationPlaceId = prefillDestination.placeId;
+        }
+        if (prefillDestination.name) {
+          fresh.destinationName = prefillDestination.name;
+        }
+        if (prefillDestination.country) {
+          fresh.destinationCountry = prefillDestination.country;
+        }
+        if (prefillDestination.heroImage) {
+          fresh.heroImage = prefillDestination.heroImage;
+        }
+        if (prefillDestination.startDate) {
+          fresh.startDate = prefillDestination.startDate;
+        }
+        if (prefillDestination.endDate) {
+          fresh.endDate = prefillDestination.endDate;
+        }
+        if (typeof prefillDestination.durationDays === "number") {
+          fresh.durationDays = prefillDestination.durationDays;
+        }
+        if (typeof prefillDestination.budgetAmount === "number") {
+          fresh.budgetAmount = prefillDestination.budgetAmount;
+        }
+        if (typeof prefillDestination.travelers === "number") {
+          fresh.travelers = prefillDestination.travelers;
+          fresh.travelType =
+            prefillDestination.travelers === 1
+              ? "Solo"
+              : prefillDestination.travelers === 2
+              ? "Couple"
+              : "Friends";
+        }
+        if (prefillDestination.placeId || prefillDestination.name) {
+          fresh.currentStep = 2;
+        }
       }
       setActiveDraft(fresh);
       if (typeof window !== "undefined") {
@@ -455,7 +492,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
   const deleteTrip = useCallback(
     async (tripId: string) => {
       const target = trips.find((t) => t.id === tripId);
-      const ownerId = user?.id || "";
+      const ownerId = user?.id || "guest-user";
       setTrips((prev) => {
         const next = prev.filter((t) => t.id !== tripId);
         if (typeof window !== "undefined" && ownerId) {
@@ -551,7 +588,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
         await refreshTrips(createdUser.id);
         showToast(
           "Account created & stored!",
-          `Welcome to RoamWise, ${createdUser.name.split(" ")[0]}! Let's plan your trip.`
+          `Welcome to RouteBloom, ${createdUser.name.split(" ")[0]}! Let's plan your trip.`
         );
         return { ok: true };
       } catch (err) {
@@ -651,7 +688,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
         await refreshTrips(loggedInUser.id);
         showToast(
           `Welcome back, ${loggedInUser.name.split(" ")[0]}!`,
-          "Signed in to your RoamWise workspace."
+          "Signed in to your RouteBloom workspace."
         );
         return { ok: true };
       } catch (err) {
@@ -678,7 +715,32 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
 
   const updateUserProfile = useCallback(
     async (partial: Partial<UserProfile>) => {
-      if (!user) return;
+      if (!user) {
+        const localProfile: UserProfile = {
+          id: "guest-user",
+          name: partial.name || "Aarav Sharma",
+          email: partial.email || "aarav@routebloom.travel",
+          homeCity: partial.homeCity || "New Delhi",
+          preferredCurrency: partial.preferredCurrency || "INR",
+          preferences: partial.preferences || {
+            favoriteCategories: ["Nature and Mountains", "Food Exploration"],
+            preferredPace: "Balanced",
+            foodPreference: "No Preference",
+            accessibilityRequirements: "",
+            defaultBudgetINR: 45000,
+            defaultTravelTier: "Comfort",
+          },
+        };
+        setUser(localProfile);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localProfile));
+        }
+        showToast(
+          "Profile & preferences saved",
+          "Your updated travel defaults have been saved."
+        );
+        return;
+      }
       try {
         const res = await fetch("/api/auth", {
           method: "POST",

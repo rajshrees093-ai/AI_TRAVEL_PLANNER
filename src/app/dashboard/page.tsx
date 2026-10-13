@@ -128,20 +128,10 @@ export default function DashboardPage() {
         country: dest.stateOrCountry,
         heroImage: dest.heroImage,
       });
-    }
-    const nextRoute = dest
-      ? "/create-trip/dates"
-      : "/create-trip/destination";
-
-    if (!isAuthenticated) {
-      router.push(
-        `/signup?redirect=${encodeURIComponent(nextRoute)}${
-          dest ? `&dest=${encodeURIComponent(dest.name)}` : ""
-        }`
-      );
+      router.push("/create-trip/dates");
       return;
     }
-    router.push(nextRoute);
+    router.push("/create-trip/destination");
   };
 
   const filteredExploreDestinations = useMemo(() => {

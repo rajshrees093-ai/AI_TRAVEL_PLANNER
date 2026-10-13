@@ -148,40 +148,31 @@ export default function LandingPage() {
       travelers?: number;
     }
   ) => {
-    if (dest) {
-      resetActiveDraft({
-        placeId: dest.placeId,
-        name: dest.name,
-        country: dest.stateOrCountry,
-        heroImage: dest.heroImage,
-      });
+    let endDate: string | undefined;
+    let durationDays: number | undefined;
+    if (prefill?.startDate) {
+      const end = new Date(`${prefill.startDate}T12:00:00`);
+      end.setDate(end.getDate() + 3);
+      endDate = end.toISOString().slice(0, 10);
+      durationDays = 4;
     }
-    if (prefill) {
-      const patch: Record<string, unknown> = {};
-      if (prefill.startDate) {
-        patch.startDate = prefill.startDate;
-        const end = new Date(`${prefill.startDate}T12:00:00`);
-        end.setDate(end.getDate() + 3);
-        patch.endDate = end.toISOString().slice(0, 10);
-        patch.durationDays = 4;
-      }
-      if (prefill.budgetAmount) patch.budgetAmount = prefill.budgetAmount;
-      if (prefill.travelers) patch.travelers = prefill.travelers;
-      updateActiveDraft(patch);
-    }
+
+    resetActiveDraft({
+      placeId: dest?.placeId,
+      name: dest?.name,
+      country: dest?.stateOrCountry,
+      heroImage: dest?.heroImage,
+      startDate: prefill?.startDate,
+      endDate,
+      durationDays,
+      budgetAmount: prefill?.budgetAmount,
+      travelers: prefill?.travelers,
+    });
 
     const nextRoute = dest
       ? "/create-trip/dates"
       : "/create-trip/destination";
 
-    if (!isAuthenticated) {
-      router.push(
-        `/signup?redirect=${encodeURIComponent(nextRoute)}${
-          dest ? `&dest=${encodeURIComponent(dest.name)}` : ""
-        }`
-      );
-      return;
-    }
     router.push(nextRoute);
   };
 

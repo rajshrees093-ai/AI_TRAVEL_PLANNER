@@ -315,7 +315,13 @@ export default function DestinationSelectionPage() {
                     <code>{activeDraft.destinationPlaceId}</code>
                   </span>
                 </div>
-                <span className="pill-badge">Ready</span>
+                <button
+                  type="button"
+                  className="button button-primary button-sm"
+                  onClick={handleContinue}
+                >
+                  Continue to Dates <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             )}
 
@@ -383,7 +389,13 @@ export default function DestinationSelectionPage() {
                     key={dest.placeId}
                     type="button"
                     className={`wizard-destination ${selected ? "selected" : ""}`}
-                    onClick={() => handleSelectPlace(dest)}
+                    onClick={() => {
+                      if (selected) {
+                        handleContinue();
+                      } else {
+                        handleSelectPlace(dest);
+                      }
+                    }}
                   >
                     <div
                       className="wizard-destination-art"
@@ -401,7 +413,7 @@ export default function DestinationSelectionPage() {
                       <p>{dest.tagline}</p>
                       <div>
                         <span>{dest.stateOrCountry.split(",")[0]}</span>
-                        <span>{selected ? "Selected ✓" : "Select →"}</span>
+                        <span>{selected ? "Selected ✓ (Click to continue)" : "Select →"}</span>
                       </div>
                     </div>
                   </button>
