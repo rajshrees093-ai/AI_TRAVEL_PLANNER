@@ -7,6 +7,10 @@ import {
   Edit3,
   Sparkles,
   ArrowLeft,
+  MapPin,
+  CalendarDays,
+  Users,
+  Wallet,
 } from "lucide-react";
 import { DashboardWorkspaceLayout } from "@/components/layout/DashboardWorkspaceLayout";
 import { WizardProgressStepper } from "@/components/wizard/WizardProgressStepper";
@@ -76,26 +80,28 @@ export default function TripReviewPage() {
                 </p>
               </div>
               <div className="review-hero-meta">
-                <span>
-                  {formatDateRange(activeDraft.startDate, activeDraft.endDate)}
+                <span className="meta-badge meta-place">
+                  <MapPin size={13} /> {activeDraft.destinationName || "Manali"}
                 </span>
-                <span>
-                  {activeDraft.travelers}{" "}
-                  {activeDraft.travelers === 1 ? "Traveler" : "Travelers"} (
-                  {activeDraft.travelType})
+                <span className="meta-badge meta-date">
+                  <CalendarDays size={13} /> {duration} {duration === 1 ? "Day" : "Days"} · {formatDateRange(activeDraft.startDate, activeDraft.endDate)}
                 </span>
-                <span>
-                  {formatCurrency(totalBudget, activeDraft.currency)} •{" "}
-                  {activeDraft.travelTier}
+                <span className="meta-badge meta-rupees">
+                  ₹ {totalBudget.toLocaleString()} Budget
+                </span>
+                <span className="meta-badge meta-person">
+                  <Users size={13} /> {activeDraft.travelers} {activeDraft.travelers === 1 ? "Person" : "Persons"}
                 </span>
               </div>
             </div>
 
             <div className="review-cards">
-              {/* 1. Destination */}
+              {/* 1. PLACES DETAIL */}
               <div className="review-card">
                 <div>
-                  <span>Destination</span>
+                  <span className="meta-badge meta-place" style={{ marginBottom: "6px" }}>
+                    <MapPin size={13} /> 1. PLACES & DESTINATION
+                  </span>
                   <strong>{activeDraft.destinationName || "Manali"}</strong>
                   <p>
                     {activeDraft.destinationCountry ||
@@ -103,7 +109,7 @@ export default function TripReviewPage() {
                     • Starting City: {activeDraft.startCity}
                   </p>
                   <small style={{ color: "var(--muted)", fontSize: "0.75rem" }}>
-                    Place ID:{" "}
+                    Verified Place ID:{" "}
                     <code>
                       {activeDraft.destinationPlaceId ||
                         "ChIJp7jK8l7vBDkR0xV1m8kY8mM"}
@@ -115,10 +121,12 @@ export default function TripReviewPage() {
                 </Link>
               </div>
 
-              {/* 2. Travel Dates & Group */}
+              {/* 2. TRAVEL DATES & DURATION */}
               <div className="review-card">
                 <div>
-                  <span>Travel Dates & Group</span>
+                  <span className="meta-badge meta-date" style={{ marginBottom: "6px" }}>
+                    <CalendarDays size={13} /> 2. TRAVEL DATES & DURATION
+                  </span>
                   <strong>
                     {formatDateRange(
                       activeDraft.startDate,
@@ -138,14 +146,18 @@ export default function TripReviewPage() {
                 </Link>
               </div>
 
-              {/* 3. Interests, Pace & Food */}
+              {/* 3. PERSONS, INTERESTS & PACE */}
               <div className="review-card">
                 <div>
-                  <span>Interests, Pace & Food</span>
+                  <span className="meta-badge meta-person" style={{ marginBottom: "6px" }}>
+                    <Users size={13} /> 3. PERSONS & TRAVEL STYLE
+                  </span>
                   <strong>
-                    {activeDraft.travelPace} Pace • {activeDraft.foodPreference}
+                    {activeDraft.travelers} {activeDraft.travelers === 1 ? "Person" : "Persons"} ({activeDraft.travelType}) • {activeDraft.travelPace} Pace
                   </strong>
-                  <p>{activeDraft.interests.join(", ")}</p>
+                  <p>
+                    Dining: {activeDraft.foodPreference} • Interests: {activeDraft.interests.join(", ")}
+                  </p>
                   {activeDraft.specialInstructions && (
                     <p style={{ fontStyle: "italic", marginTop: "4px" }}>
                       Note: “{activeDraft.specialInstructions}”
@@ -157,13 +169,15 @@ export default function TripReviewPage() {
                 </Link>
               </div>
 
-              {/* 4. Total Budget & Tier */}
+              {/* 4. RUPEES BUDGET & TIER */}
               <div className="review-card">
                 <div>
-                  <span>Total Budget & Tier</span>
+                  <span className="meta-badge meta-rupees" style={{ marginBottom: "6px" }}>
+                    <Wallet size={13} /> 4. RUPEES BUDGET & EXPENSES
+                  </span>
                   <strong>
-                    {formatCurrency(totalBudget, activeDraft.currency)} (
-                    {activeDraft.travelTier})
+                    {formatCurrency(totalBudget, activeDraft.currency)} Total (
+                    {activeDraft.travelTier} Tier)
                   </strong>
                   <p>
                     {formatCurrency(

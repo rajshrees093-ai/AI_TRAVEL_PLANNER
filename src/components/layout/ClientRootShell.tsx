@@ -3,6 +3,7 @@
 import React from "react";
 import { RoamWiseProvider, useRoamWise } from "@/context/RoamWiseContext";
 import { ToastViewport } from "@/components/ui/BrandComponents";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 function ToastBridge() {
   const { toasts, dismissToast } = useRoamWise();
@@ -14,6 +15,7 @@ export function ClientRootShell({ children }: { children: React.ReactNode }) {
     <RoamWiseProvider>
       {children}
       <ToastBridge />
+      <AuthModal />
     </RoamWiseProvider>
   );
 }

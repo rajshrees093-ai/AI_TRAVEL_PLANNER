@@ -26,6 +26,7 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [redirectPath, setRedirectPath] = useState("/dashboard");
   const [pendingDest, setPendingDest] = useState("");
+  const [reason, setReason] = useState("");
   const [slideIdx, setSlideIdx] = useState(0);
 
   useEffect(() => {
@@ -33,8 +34,10 @@ export default function LoginPage() {
       const params = new URLSearchParams(window.location.search);
       const redir = params.get("redirect");
       const dest = params.get("dest");
+      const r = params.get("reason");
       if (redir) setRedirectPath(redir);
       if (dest) setPendingDest(dest);
+      if (r) setReason(r);
     }
   }, []);
 
@@ -138,6 +141,16 @@ export default function LoginPage() {
             </div>
           )}
 
+          {reason === "fill_details" && (
+            <div className="demo-callout" style={{ borderLeft: "4px solid var(--ocean)", marginBottom: 12 }}>
+              <Sparkles size={16} />
+              <span>
+                <b>Sign in to fill your travel details.</b> Sign in or create an account
+                to specify your departure city, return date, and budget.
+              </span>
+            </div>
+          )}
+
           {errorMsg && (
             <div className="field-error" role="alert" style={{ marginBottom: 12 }}>
               <span>{errorMsg}</span>
@@ -221,13 +234,6 @@ export default function LoginPage() {
             <Globe2 size={16} /> Continue with Google
           </button>
 
-          <div className="auth-demo-choice">
-            <span>Want to look around first?</span>
-            <button type="button" onClick={() => router.push("/dashboard")}>
-              Explore workspace preview
-            </button>
-          </div>
-
           <p className="auth-switch">
             New to RouteBloom?{" "}
             <button
@@ -243,6 +249,12 @@ export default function LoginPage() {
                       ? `${redirectPath ? "&" : "?"}dest=${encodeURIComponent(
                           pendingDest
                         )}`
+                      : ""
+                  }${
+                    reason
+                      ? `${
+                          redirectPath || pendingDest ? "&" : "?"
+                        }reason=${encodeURIComponent(reason)}`
                       : ""
                   }`
                 )

@@ -83,6 +83,7 @@ interface RoamWiseContextValue {
   activeDraft: TripWizardDraft;
   updateActiveDraft: (partial: Partial<TripWizardDraft>) => void;
   resetActiveDraft: (prefillDestination?: {
+    startCity?: string;
     placeId?: string;
     name?: string;
     country?: string;
@@ -121,6 +122,11 @@ interface RoamWiseContextValue {
     type?: "success" | "warning" | "error" | "info"
   ) => void;
   dismissToast: (id: string) => void;
+  isAuthModalOpen: boolean;
+  authModalMode: "login" | "signup";
+  authModalRedirect: string;
+  openAuthModal: (mode?: "login" | "signup", redirectPath?: string) => void;
+  closeAuthModal: () => void;
 }
 
 function createInitialDraft(user?: UserProfile | null): TripWizardDraft {
@@ -196,6 +202,22 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
     createInitialDraft(null)
   );
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<"login" | "signup">("login");
+  const [authModalRedirect, setAuthModalRedirect] = useState<string>("/dashboard");
+
+  const openAuthModal = useCallback(
+    (mode: "login" | "signup" = "login", redirectPath = "/dashboard") => {
+      setAuthModalMode(mode);
+      setAuthModalRedirect(redirectPath);
+      setIsAuthModalOpen(true);
+    },
+    []
+  );
+
+  const closeAuthModal = useCallback(() => {
+    setIsAuthModalOpen(false);
+  }, []);
 
   const showToast = useCallback(
     (
@@ -351,6 +373,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
 
   const resetActiveDraft = useCallback(
     (prefillDestination?: {
+      startCity?: string;
       placeId?: string;
       name?: string;
       country?: string;
@@ -363,6 +386,9 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
     }) => {
       const fresh = createInitialDraft(user);
       if (prefillDestination) {
+        if (prefillDestination.startCity) {
+          fresh.startCity = prefillDestination.startCity;
+        }
         if (prefillDestination.placeId) {
           fresh.destinationPlaceId = prefillDestination.placeId;
         }
@@ -716,29 +742,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
   const updateUserProfile = useCallback(
     async (partial: Partial<UserProfile>) => {
       if (!user) {
-        const localProfile: UserProfile = {
-          id: "guest-user",
-          name: partial.name || "Aarav Sharma",
-          email: partial.email || "aarav@routebloom.travel",
-          homeCity: partial.homeCity || "New Delhi",
-          preferredCurrency: partial.preferredCurrency || "INR",
-          preferences: partial.preferences || {
-            favoriteCategories: ["Nature and Mountains", "Food Exploration"],
-            preferredPace: "Balanced",
-            foodPreference: "No Preference",
-            accessibilityRequirements: "",
-            defaultBudgetINR: 45000,
-            defaultTravelTier: "Comfort",
-          },
-        };
-        setUser(localProfile);
-        if (typeof window !== "undefined") {
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localProfile));
-        }
-        showToast(
-          "Profile & preferences saved",
-          "Your updated travel defaults have been saved."
-        );
+        openAuthModal("login", "/profile");
         return;
       }
       try {
@@ -771,7 +775,7 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
         "Your updated details have been saved to the backend."
       );
     },
-    [user, showToast]
+    [user, showToast, openAuthModal]
   );
 
   const deleteUserAccount = useCallback(async () => {
@@ -840,6 +844,11 @@ export function RoamWiseProvider({ children }: { children: React.ReactNode }) {
         toasts,
         showToast,
         dismissToast,
+        isAuthModalOpen,
+        authModalMode,
+        authModalRedirect,
+        openAuthModal,
+        closeAuthModal,
       }}
     >
       {children}

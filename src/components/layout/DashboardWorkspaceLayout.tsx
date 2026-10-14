@@ -46,16 +46,222 @@ export function DashboardWorkspaceLayout({
     theme,
     toggleTheme,
     signOut,
+    signIn,
+    signUp,
+    isAuthLoading,
     toasts,
     dismissToast,
   } = useRoamWise();
 
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [gateMode, setGateMode] = useState<"login" | "signup">("login");
+  const [gateName, setGateName] = useState("");
+  const [gateEmail, setGateEmail] = useState("");
+  const [gatePassword, setGatePassword] = useState("");
+  const [gateConfirmPassword, setGateConfirmPassword] = useState("");
+  const [gateError, setGateError] = useState<string | null>(null);
 
   const navigate = (path: string) => {
     setMobileOpen(false);
     router.push(path);
   };
+
+  const handleGateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGateError(null);
+    if (gateMode === "login") {
+      const res = await signIn(gateEmail.trim(), gatePassword, false);
+      if (!res.ok) {
+        setGateError(res.error || "Invalid email or password.");
+      }
+    } else {
+      if (!gateName.trim()) {
+        setGateError("Please enter your name.");
+        return;
+      }
+      if (gatePassword.length < 8) {
+        setGateError("Password must be at least 8 characters.");
+        return;
+      }
+      if (gatePassword !== gateConfirmPassword) {
+        setGateError("Passwords do not match.");
+        return;
+      }
+      const res = await signUp(gateName.trim(), gateEmail.trim(), gatePassword);
+      if (!res.ok) {
+        setGateError(res.error || "Could not create account.");
+      }
+    }
+  };
+
+  const handleGateGoogle = async () => {
+    setGateError(null);
+    const googleEmail = gateEmail.trim() || "traveler@routebloom.travel";
+    const googleName = gateName.trim() || "Traveler";
+    const res = await signIn(googleEmail, googleName, true);
+    if (!res.ok) {
+      setGateError(res.error || "Google authentication failed.");
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="access-gate">
+        <div className="gate-card">
+          <div style={{ marginBottom: "16px" }}>
+            <Brand />
+          </div>
+          <span className="eyebrow">
+            <Sparkles size={14} /> ROUTEBLOOM MEMBER ACCESS
+          </span>
+          <h1>
+            {gateMode === "login" ? (
+              <>
+                Sign in to your<br />
+                <em>RouteBloom workspace.</em>
+              </>
+            ) : (
+              <>
+                Create your free<br />
+                <em>RouteBloom account.</em>
+              </>
+            )}
+          </h1>
+          <p>
+            {gateMode === "login"
+              ? "Sign in to plan trips, view customized itineraries, and save travel plans."
+              : "Register in seconds to start building and customizing your travel itineraries."}
+          </p>
+
+          <div className="auth-tabs" style={{ marginBottom: "16px" }}>
+            <button
+              type="button"
+              className={`auth-tab-btn ${gateMode === "login" ? "active" : ""}`}
+              onClick={() => {
+                setGateMode("login");
+                setGateError(null);
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              className={`auth-tab-btn ${gateMode === "signup" ? "active" : ""}`}
+              onClick={() => {
+                setGateMode("signup");
+                setGateError(null);
+              }}
+            >
+              Create Account
+            </button>
+          </div>
+
+          {gateError && (
+            <div className="field-error" style={{ marginBottom: "12px" }}>
+              <span>{gateError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleGateSubmit} className="space-y-4" style={{ width: "100%" }}>
+            {gateMode === "signup" && (
+              <label className="form-field">
+                <span>Full Name</span>
+                <input
+                  type="text"
+                  required
+                  value={gateName}
+                  onChange={(e) => setGateName(e.target.value)}
+                  placeholder="Your name"
+                />
+              </label>
+            )}
+
+            <label className="form-field">
+              <span>Email Address</span>
+              <input
+                type="email"
+                required
+                value={gateEmail}
+                onChange={(e) => setGateEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Password</span>
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={gatePassword}
+                onChange={(e) => setGatePassword(e.target.value)}
+                placeholder="•••••••• (min 8 characters)"
+              />
+            </label>
+
+            {gateMode === "signup" && (
+              <label className="form-field">
+                <span>Confirm Password</span>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={gateConfirmPassword}
+                  onChange={(e) => setGateConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </label>
+            )}
+
+            <button
+              type="submit"
+              className="button button-primary button-wide"
+              disabled={isAuthLoading}
+              style={{ marginTop: "8px" }}
+            >
+              {isAuthLoading ? (
+                "Please wait…"
+              ) : gateMode === "login" ? (
+                <>
+                  Sign in to RouteBloom <ArrowRight size={16} />
+                </>
+              ) : (
+                <>
+                  Create free account <ArrowRight size={16} />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="auth-divider" style={{ margin: "14px 0" }}>
+            <span />
+            or
+            <span />
+          </div>
+
+          <button
+            type="button"
+            className="button button-outline button-wide"
+            onClick={handleGateGoogle}
+            disabled={isAuthLoading}
+          >
+            <Compass size={16} /> Continue with Google
+          </button>
+
+          <span className="gate-note" style={{ marginTop: "14px" }}>
+            <ShieldCheck size={14} /> Your saved itineraries stay private to your verified account.
+          </span>
+        </div>
+
+        <div
+          className="gate-photo"
+          style={{
+            backgroundImage: "url('/places/switzerland-lauterbrunnen.jpg')",
+          }}
+        />
+      </div>
+    );
+  }
 
   const handleExploreDestinations = () => {
     setMobileOpen(false);

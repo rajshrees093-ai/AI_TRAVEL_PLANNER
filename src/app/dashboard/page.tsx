@@ -15,6 +15,7 @@ import {
   Sparkles,
   Trash2,
   Users,
+  MapPin,
 } from "lucide-react";
 import { DashboardWorkspaceLayout } from "@/components/layout/DashboardWorkspaceLayout";
 import { useRoamWise } from "@/context/RoamWiseContext";
@@ -511,13 +512,17 @@ function DashboardTripCard({
           <span className="trip-status">{trip.status}</span>
         </div>
         <div className="trip-metadata">
-          <span>
-            <CalendarDays size={14} />
-            {fmtDate(trip.startDate)}
+          <span className="meta-badge meta-place">
+            <MapPin size={12} /> {trip.destinationName}
           </span>
-          <span>
-            <Users size={14} />
-            {trip.travelers} travelers
+          <span className="meta-badge meta-date">
+            <CalendarDays size={12} /> {trip.durationDays}D · {fmtDate(trip.startDate)}
+          </span>
+          <span className="meta-badge meta-rupees">
+            ₹ {formatCurrency(estimatedCost, trip.currency).replace(/^[^\d]+/, "")}
+          </span>
+          <span className="meta-badge meta-person">
+            <Users size={12} /> {trip.travelers} {trip.travelers === 1 ? "Person" : "Persons"}
           </span>
         </div>
         <div className="trip-card-foot">

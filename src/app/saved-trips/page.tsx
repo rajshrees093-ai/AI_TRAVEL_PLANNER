@@ -14,6 +14,9 @@ import {
   Plus,
   Compass,
   ArrowRight,
+  MapPin,
+  CalendarDays,
+  Users,
 } from "lucide-react";
 import { DashboardWorkspaceLayout } from "@/components/layout/DashboardWorkspaceLayout";
 import { useRoamWise } from "@/context/RoamWiseContext";
@@ -237,11 +240,18 @@ export default function SavedTripsPage() {
                   <div className="trip-card-body">
                     <p>{trip.themeTagline}</p>
                     <div className="trip-card-meta">
-                      <span>{formatDateRange(trip.startDate, trip.endDate)}</span>
-                      <span>
-                        {trip.travelers} ({trip.travelType})
+                      <span className="meta-badge meta-place">
+                        <MapPin size={12} /> {trip.destinationName}
                       </span>
-                      <span>{formatCurrency(trip.budget, trip.currency)}</span>
+                      <span className="meta-badge meta-date">
+                        <CalendarDays size={12} /> {trip.durationDays}D · {formatDateRange(trip.startDate, trip.endDate)}
+                      </span>
+                      <span className="meta-badge meta-rupees">
+                        ₹ {trip.budget.toLocaleString()}
+                      </span>
+                      <span className="meta-badge meta-person">
+                        <Users size={12} /> {trip.travelers} ({trip.travelType})
+                      </span>
                     </div>
                     <div className="trip-card-actions">
                       <Link href={`/trips/${trip.id}`} className="text-button">

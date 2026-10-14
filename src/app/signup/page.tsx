@@ -31,6 +31,7 @@ export default function SignupPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [redirectPath, setRedirectPath] = useState("/create-trip/destination");
   const [pendingDest, setPendingDest] = useState("");
+  const [reason, setReason] = useState("");
   const [slideIdx, setSlideIdx] = useState(0);
 
   useEffect(() => {
@@ -38,8 +39,10 @@ export default function SignupPage() {
       const params = new URLSearchParams(window.location.search);
       const redir = params.get("redirect");
       const dest = params.get("dest");
+      const r = params.get("reason");
       if (redir) setRedirectPath(redir);
       if (dest) setPendingDest(dest);
+      if (r) setReason(r);
     }
   }, []);
 
@@ -153,6 +156,16 @@ export default function SignupPage() {
             </div>
           )}
 
+          {reason === "fill_details" && (
+            <div className="demo-callout" style={{ borderLeft: "4px solid var(--ocean)", marginBottom: 12 }}>
+              <Sparkles size={16} />
+              <span>
+                <b>Create an account to fill your travel details.</b> Sign up to
+                customize your departure city, return date, and budget.
+              </span>
+            </div>
+          )}
+
           {errorMsg && (
             <div className="field-error" role="alert" style={{ marginBottom: 12 }}>
               <span>{errorMsg}</span>
@@ -259,13 +272,6 @@ export default function SignupPage() {
             <Globe2 size={16} /> Continue with Google
           </button>
 
-          <div className="auth-demo-choice">
-            <span>Just exploring?</span>
-            <button type="button" onClick={() => router.push("/dashboard")}>
-              Explore workspace preview
-            </button>
-          </div>
-
           <p className="auth-switch">
             Already have an account?{" "}
             <button
@@ -275,6 +281,18 @@ export default function SignupPage() {
                   `/login${
                     redirectPath
                       ? `?redirect=${encodeURIComponent(redirectPath)}`
+                      : ""
+                  }${
+                    pendingDest
+                      ? `${redirectPath ? "&" : "?"}dest=${encodeURIComponent(
+                          pendingDest
+                        )}`
+                      : ""
+                  }${
+                    reason
+                      ? `${
+                          redirectPath || pendingDest ? "&" : "?"
+                        }reason=${encodeURIComponent(reason)}`
                       : ""
                   }`
                 )

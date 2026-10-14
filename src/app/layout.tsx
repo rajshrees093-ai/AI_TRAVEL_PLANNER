@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Inter, Playfair_Display } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit, Playfair_Display, Cinzel } from "next/font/google";
 import "./globals.css";
 import { ClientRootShell } from "@/components/layout/ClientRootShell";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -10,18 +17,18 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
-
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "800"],
   style: ["normal", "italic"],
+  display: "swap",
+});
+
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  variable: "--font-cinzel",
+  weight: ["600", "700", "800"],
   display: "swap",
 });
 
@@ -42,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${jakarta.variable} ${inter.variable} ${playfair.variable}`}
+      className={`${outfit.variable} ${jakarta.variable} ${playfair.variable} ${cinzel.variable}`}
       suppressHydrationWarning
     >
       <body className="font-sans bg-background text-heading min-h-screen flex flex-col">
